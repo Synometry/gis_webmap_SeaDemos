@@ -1,0 +1,13 @@
+PermitNum as id (capture)
+PermitClassMapped = Residential (do not capture)
+PermitTypeMapped = building (do not capture)
+IssuedDate is between 1/1/2000 and 10/3/2026 (day of capture) (capture)
+CurrentStatus = Completed (do not capture)
+capture units removed
+
+my own data transformation:
+- removed permits with descriptions matching any variation of "closed for incomplete project"
+- removed permits with neither a "units removed" or "units added" value
+- removed permits where both "units removed" and "units added" were 0
+
+

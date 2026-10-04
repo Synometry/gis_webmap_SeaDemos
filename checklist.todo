@@ -1,7 +1,13 @@
-- acquire broader data matching search pattern
+- acquire broader data matching search pattern (https://data.seattle.gov/Built-Environment/Building-Permits/76t5-zqzr/about_data)
+- prelim fact-gathering:
+    - only overarching building permits have accurate net-unit figures
+    - do demo permits contain info on whether units being demo'd were unfit for living in some way?
+        - Very rare.
+    - history of Seattle legislative force on development
 - prelim analysis:
     - permit count by month
     - unit destruction by month
-- prelim fact-gathering:
-    - do demo permits contain info on whether units being demo'd were unfit for living in some way?
-    - history of Seattle legislative force on development
+- website interface
+    - color dots by year, size dots by units destroyed
+    - allow for slicing visualized data by year range and unit count range
+    - panel for 
