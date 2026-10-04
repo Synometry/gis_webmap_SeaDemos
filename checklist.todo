@@ -5,9 +5,9 @@
         - Very rare.
     - history of Seattle legislative force on development
 - prelim analysis:
-    - permit count by month
+    - permit count by month 
     - unit destruction by month
-- website interface
+- website interface 
     - color dots by year, size dots by units destroyed
     - allow for slicing visualized data by year range and unit count range
     - panel for 
