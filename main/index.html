@@ -3,237 +3,35 @@
 
 <head>
     <meta charset="utf-8">
-    <title>Residential Seattle Demolition Permits</title>
+    <title>Residential Seattle Permits</title>
     <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
-    <link href="https://api.mapbox.com/mapbox-gl-js/v2.5.0/mapbox-gl.css" rel="stylesheet">
-    <script src="https://api.mapbox.com/mapbox-gl-js/v2.5.0/mapbox-gl.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.32.0/mapbox-gl.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.32.0/mapbox-gl.js"></script>
+    <link href="main.css" rel="stylesheet">
+    <script src="main.js"></script>
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-        }
-
-        #container {
-            display: flex;
-            height: 100vh;
-            flex-direction: row;
-            align-items: stretch;
-        }
-
-        #side-panel {
-            display: flex;
-            flex-direction: column;
-            align-items: stretch;
-            padding: 10px;
-            max-width: 30vw;
-        }
-
-        @media screen and (max-width: 950px) {
-
-            #side-panel {
-                display: none;
-            }
-
-        }
-
-        #map {
-            flex-grow: 1;
-        }
-
-        button {
-            margin-bottom: 10px;
-        }
-
-        table {
-            border-collapse: collapse;
-            border-spacing: 0;
-            width: 100%;
-        }
-        
-        th {
-            position: sticky;
-            top: 0px;
-            background-color: white;
-        }
-        
-        th,
-        td {
-            text-align: left;
-            padding: 8px;
-            padding-left: 16px;
-            width: 50%;
-        }
-        
-        tr:nth-child(even) {
-            background-color: #f2f2f2;
-        }
-        
-        .table-container {
-            border: 1px solid #ddd;
-            overflow-y: scroll;
-            /* height: 70%; */
-        }
-
-        .credit-text {
-            font-style: italic;
-            font-size: smaller;
-        }
-
-        h2 {
-            margin-top: 10px;
-            margin-bottom: 0px;
-        }
-
-        .description {
-            margin: 10px 10px 20px 10px;
-            font-size: 1em;
-        }
     </style>
 </head>
-
 <body>
-    <main id="container">
-        <div id="side-panel">
+    <main id="main">
+        <div id="top-content">
 
-            <div class="header-container">
-                <h2>Residential Seattle Demolition Permits</h2>
-                <p class="description">A point map of completed residential building permits for demolition, issued between 2016 and 2022.</p>
-                <hr>
-                <p>Manual sorting demonstration (by number of units demolished, descending):</p>
-                <button>Sort</button>
-                <p style="font-size:small;font-style:italic;margin-top:0px;">Warning: this is slow!</p>
+        </div>
+        <div id="bottom-content">
+            <div id="side-panel">
+                <button id="intro-section-button" class="section-button selected">Introduction</button>
+                <button id="mispelled-section-button" class="section-button">secoion o</button>
+                <button class="section-button">Section 2</button>
+                <button class="section-button">Long Section Name</button>
+                <div id="section-selector"></div>
             </div>
-            <div class="table-container">
-                <table>
-                    <tr>
-                        <th>Housing Units Removed</th>
-                        <th>Date Issued</th>
-                    </tr>
-                </table>
-            </div>
-            <div id="footer">
-                <hr>
-                <p class="credit-text">Seattle census tracts for the 2020 census downloaded from the City of Seattle's 
-                    <a href="https://data-seattlecitygis.opendata.arcgis.com/datasets/SeattleCityGIS::2020-census-tracts-seattle/about">Open Data portal</a>-(8/31/26)</p>
-                <p class="credit-text">Permit data provided by Seattle Department of Construction & Inspections through the City of Seattle's <a href="https://data.seattle.gov/Built-Environment/
-                    Building-Permits/76t5-zqzr/explore/query/SELECT%0A%20%20%60permitnum%60%2C%0A%20%20%60housingunitsremoved%60%2C%0A%20%20%60issueddate
-                    %60%2C%0A%20%20%60latitude%60%2C%0A%20%20%60longitude%60%2C%0A%20%20%60location1%60%2C%0A%20%20%60housingunits%60%2C%0A%20%20%60housi
-                    ngunitsadded%60%0AWHERE%0A%20%20caseless_one_of%28%60permitclassmapped%60%2C%20%22Residential%22%29%0A%20%20AND%20caseless_one_of%28%
-                    60permittypemapped%60%2C%20%22Demolition%22%29%0A%20%20AND%20%60issueddate%60%0A%20%20%20%20%20%20%20%20BETWEEN%20%222016-01-01T16%3A
-                    20%3A19%22%20%3A%3A%20floating_timestamp%0A%20%20%20%20%20%20%20%20AND%20%222022-12-31T16%3A20%3A19%22%20%3A%3A%20floating_timestamp%
-                    0A%20%20AND%20caseless_one_of%28%60statuscurrent%60%2C%20%22Completed%22%29%0AORDER%20BY%20%60housingunitsremoved%60%20DESC%20NULL%20
-                    LAST/page/filter">Open Data portal</a>-(9/1/26)</p>
+            <div id="main-content">
+                <section id="section-introduction">
+                    <h1>Introduction</h1>
+                </section>
             </div>
         </div>
-        <div id="map"></div>
     </main>
-    <script>
-        mapboxgl.accessToken =
-            'pk.eyJ1IjoiaG9sZGVuYiIsImEiOiJjbXRoeWY2Z2IxbDZlMndwd2dqMnc5d2ttIn0.BPMXu22dBzuOaDN_L5CEBw';
-        let map = new mapboxgl.Map({
-            container: 'map', // container ID
-            style: 'mapbox://styles/mapbox/satellite-v9', // style URL
-            zoom: 10.5, // starting zoom
-            center: [-122.3626438965025, 47.623469940234047] // starting center
-        });
-
-        async function geojsonFetch() {
-            let response, permits, tracts, table;
-            response = await fetch('assets/permits.geojson');
-            permits = await response.json();
-            response = await fetch('assets/Census_Tracts.geojson');
-            tracts = await response.json();
-            
-            function loadingData() {
-                map.addSource('tracts', {
-                    type: 'geojson',
-                    data: tracts
-                });
-
-                map.addLayer({
-                    'id': 'tracts-layer',
-                    'type': 'fill',
-                    'source': 'tracts',
-                    'paint': {
-                        'fill-color': '#0080ff', // blue color fill
-                        'fill-outline-color': '#ffffff', // classic white border
-                        'fill-opacity': 0.8
-                    }
-                });
-
-                map.addSource('permits', {
-                    type: 'geojson',
-                    data: permits
-                });
-
-                map.addLayer({
-                    'id': 'permits-layer',
-                    'type': 'circle',
-                    'source': 'permits',
-                    'paint': {
-                        'circle-radius': 3,
-                        'circle-stroke-width': 1,
-                        'circle-color': 'white',
-                        'circle-stroke-color': 'black'
-                    }
-                });
-            }
-            if (!map.loaded()) {
-                map.on('load', loadingData);
-            } else {
-                loadingData()
-            }
-
-            table = document.getElementsByTagName("table")[0];
-            let row, cell2, cell3;
-            for (let i = 0; i < permits.features.length; i++) {
-                // Create an empty <tr> element and add it to the 1st position of the table:
-                row = table.insertRow(-1);
-                cell2 = row.insertCell(0);
-                cell3 = row.insertCell(1);
-                let num = parseInt(permits.features[i].properties.HousingUnitsRemoved);
-                cell2.innerHTML = isNaN(num) ? 0 : num;
-                cell3.innerHTML = permits.features[i].properties.IssuedDate;
-            }
-
-        };
-        geojsonFetch();
-
-        let btn = document.getElementsByTagName("button")[0];
-
-        btn.addEventListener('click', sortTable);
-        // This was incredibly slow. I improved it a bit
-        function sortTable(e) {
-            e.target.innerHTML = 'Sorting... 0%';
-            e.target.setAttribute('disabled', 'true');
-            setTimeout(sortHelper, 100, e.target);
-        }
-
-
-        function sortHelper(button) {
-            button.innerHTML =
-                `Sorting... ${Math.ceil((parseFloat(button.innerHTML.replace('Sorting... ', '').replace('%', '')) / 100 + 7 / 25000) * 100 * 1000) / 1000}%`;
-
-            let table, rows, switching, i, x, y, shouldSwitch;
-            table = document.getElementsByTagName("table")[0];
-            rows = table.rows;
-            shouldSwitch = false;
-            for (i = 1; i < (rows.length - 1); i++) {
-                x = parseFloat(rows[i].getElementsByTagName("td")[0].innerHTML);
-                y = parseFloat(rows[i + 1].getElementsByTagName("td")[0].innerHTML);
-                if (x < y) {
-                    rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
-                    shouldSwitch = true;
-                }
-            }
-            if (shouldSwitch) {
-                setTimeout(sortHelper, 0, button);
-            } else {
-                button.removeAttribute('disabled');
-                button.innerHTML = 'Sort';
-            }
-        }
-    </script>
 </body>
 
 </html>

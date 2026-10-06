@@ -9,5 +9,6 @@ my own data transformation:
 - removed permits with descriptions matching any variation of "closed for incomplete project"
 - removed permits with neither a "units removed" or "units added" value
 - removed permits where both "units removed" and "units added" were 0
+- removed permits with parent permits to avoid double-counting
 
 
