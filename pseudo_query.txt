@@ -1,7 +1,7 @@
 PermitNum as id (capture)
 PermitClassMapped = Residential (do not capture)
 PermitTypeMapped = building (do not capture)
-IssuedDate is between 1/1/2000 and 10/3/2026 (day of capture) (capture)
+IssuedDate is between 1/1/2005 and 10/3/2026 (day of capture) (capture)
 CurrentStatus = Completed (do not capture)
 capture units removed
 
