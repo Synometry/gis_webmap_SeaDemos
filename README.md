@@ -64,7 +64,7 @@ Created field "Status" holding my own status categorization for each permit:
 - Permits with a blank completion date and their date of expiry had lapsed received "Expired - Open"
 - Otherwise, the permit's status was assigned "Active" unless the original StatusCurrent field was explicitly "Completed"
 
-I added the field "AdjEstCost" for the estimated costs, adjusted for inflation, expressed in 2026 dollars. The factor of inflation drawn from BLS historical CPI data.
+I added the field "AdjEstCost" for the estimated costs, adjusted for inflation, expressed in Jan, 2026 dollars. The factor of inflation drawn from BLS historical CPI data.
 
 Address removing "expired" or "marked incomplete" permits, which may have had some work completed anyway.
 
