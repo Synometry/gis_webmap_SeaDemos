@@ -42,7 +42,9 @@ Noteworthy fields:
 
 ## {Methods/Methodology (name/explain each step)}
 ### Inflation Data
-I queried the Version 1.0 endpoint of the Bureau of Labor Statistics API for Consumer Price Index figures.
+I used a file containing yearly, seasonally-adjusted CPI values from the Bureau of Labor Statistics to calculate inflation.
+
+Since CPI was not calculated for October, 2025, I used the average CPI for 2025 in its place.
 
 ### Permit Data
 The focus of this project, I wanted to translate this data to a form with greater relation to the tangible reality of the city. The desired form is therefore that each entry refers to one master permit for a completed construction project, the project itself representing a discrete, physical transformation of Seattle, anchored to a single point in time when the reported or estimated changes become meaningful. (Master permits have the added virtue of consistent validity in regards to cost estimation, date, status, and changes in housing units.)
