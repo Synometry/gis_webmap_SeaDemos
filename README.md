@@ -46,7 +46,7 @@ I used a file containing yearly, seasonally-adjusted CPI values from the Bureau 
 
 Since CPI was not calculated for October, 2025, I used the average CPI for 2025 in its place.
 
-### Permit Data
+### Permit Data - Processing to Database
 The focus of this project, I wanted to translate this data to a form with greater relation to the tangible reality of the city. The desired form is therefore that each entry refers to one master permit for a completed construction project, the project itself representing a discrete, physical transformation of Seattle, anchored to a single point in time when the reported or estimated changes become meaningful. (Master permits have the added virtue of consistent validity in regards to cost estimation, date, status, and changes in housing units.)
 
 A permit is first timestamped when the application is submitted, with future timestamps for issuance, expiry, and completion. I chose the date the permit was issued to represent the permit as a "point in time", since the earliest construction for a project can legally begin is when the permit is issued. Only when construction begins, do material/labor costs start being paid, are housing units removed or added, etc.
@@ -56,11 +56,14 @@ Some projects were marked as complete, but contained "marked closed as incomplet
 I accessed Seattle permit data on [DATE], using the online querying tool to immediately select only the permits matching the following criteria:
 - PermitClassMapped = "Residential"
 - PermitTypeMapped = "Building"
-- IssuedDate between 2005 and 2026
-- CurrentStatus does not indicate the permit was rejected, didn't happen, expired, etc.
+- IssuedDate between 2005 and the end of 2025
+- CurrentStatus does not indicate the permit wasn't issued, or closed prior to completion [POPULATE]
 - Description did not contain the phrase "[POPULATE]"
 - HousingUnitsAdded and HousingUnitsRemoved were neither blank nor non-zero
 - ParentPermitNum was blank (Avoids double-counting)
+
+Requested in csv form (requesting geojson provides no geometry), offers faster platform to load into database
+convert location1 into T-SQL native type?
 
 Created field "Status" holding my own status categorization for each permit:
 - Permits with a blank completion date and their date of expiry had lapsed received "Expired - Open"
@@ -70,9 +73,46 @@ I added the field "AdjEstCost" for the estimated costs, adjusted for inflation, 
 
 Address removing "expired" or "marked incomplete" permits, which may have had some work completed anyway.
 
+Put these in somewhere:
+- endpoint: ```'https://data.seattle.gov/api/v3/views/76t5-zqzr/query'```
+- query: ```'SELECT * WHERE '\
+    'caseless_one_of(permitclassmapped, "residential") AND '\
+    'caseless_one_of(permittypemapped, "building") AND '\
+    'issueddate BETWEEN "2005-01-01T00:00:00" and "2025-12-31T23:59:59" AND '\
+    'caseless_one_of(statuscurrent, "approved to occupy", "completed", "inspections completed", "issued", "phase issued") AND '\
+    'NOT caseless_starts_with(description, "closed as incomplete") AND '\
+    '(housingunitsremoved IS NOT NULL OR housingunitsadded IS NOT NULL) AND '\
+    'NOT (housingunitsremoved == 0 AND housingunitsadded == 0) AND '\
+    'parentpermitnum IS NULL'```
+
 {explain how it produces desirable results}
 
 {explain what it produced}
+
+broad outline:
+- census tracts
+    - find data link
+    - limited dissolve by "gen_alias" [VERIFY]
+    - write python script to download, cache, and load into sql "tracts_table"
+- api to python script
+    - save csv locally (cache)
+    - create geometry column with Shape dtype from Location1 object
+    - load data into sql "permits_table"
+    - perform analyses 
+        - estimated cost to Jan, 2026 dollars
+        - logic for new "status" field
+        - group by year, agg by sum
+            - perform for est cost, cost-per-net-change, net-change
+        - analysis by tract by year:
+            - est cost, cost-per-net-change, net-change
+    - export to GeoJSON
+- web map site
+    - finish site
+    - use generated GeoJSONs from script for map layers
+    - use figures generated from script for explanations
+- ArcGIS Pro
+    - connect to sql server
+    
 ### {method subsection (if more than one)}
 {id logic that points to this method as necessary (or just explain choice)}
 
