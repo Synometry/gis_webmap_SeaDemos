@@ -75,15 +75,8 @@ Address removing "expired" or "marked incomplete" permits, which may have had so
 
 Put these in somewhere:
 - endpoint: ```'https://data.seattle.gov/api/v3/views/76t5-zqzr/query'```
-- query: ```'SELECT * WHERE '\
-    'caseless_one_of(permitclassmapped, "residential") AND '\
-    'caseless_one_of(permittypemapped, "building") AND '\
-    'issueddate BETWEEN "2005-01-01T00:00:00" and "2025-12-31T23:59:59" AND '\
-    'caseless_one_of(statuscurrent, "approved to occupy", "completed", "inspections completed", "issued", "phase issued") AND '\
-    'NOT caseless_starts_with(description, "closed as incomplete") AND '\
-    '(housingunitsremoved IS NOT NULL OR housingunitsadded IS NOT NULL) AND '\
-    'NOT (housingunitsremoved == 0 AND housingunitsadded == 0) AND '\
-    'parentpermitnum IS NULL'```
+- query:
+```'SELECT * WHERE caseless_one_of(permitclassmapped, "residential") AND caseless_one_of(permittypemapped, "building") AND issueddate BETWEEN "2005-01-01T00:00:00" and "2025-12-31T23:59:59" AND caseless_one_of(statuscurrent, "approved to occupy", "completed", "inspections completed", "issued", "phase issued") AND NOT caseless_starts_with(description, "closed as incomplete") AND (housingunitsremoved IS NOT NULL OR housingunitsadded IS NOT NULL) AND NOT (housingunitsremoved == 0 AND housingunitsadded == 0) AND parentpermitnum IS NULL'```
 
 {explain how it produces desirable results}
 
