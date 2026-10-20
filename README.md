@@ -13,7 +13,16 @@ address:
 - summarize methods: what is the logic - not the history - that carried me from the study question or problem to my results
 - what were the results? Is this outcome desirable?
 
+## Libraries/Modules (if applicable)
+List modules and libraries used, for purposes of reproduction/review.
+
+Provide links for unusual libraries.
+
 ## Data
+### CPI - Bureau of Labor Statistics
+The BLS publishes consumer price index figures - weighted sums of various products' prices to offer a snapshot of the United States' dollar's value.
+
+I took them from their website, and used them to create a table of the number of Jan, 2026 dollars equivalent to 1 dollar for the given month and year.
 ### [Permits: City of Seattle](https://data.seattle.gov/d/76t5-zqzr)
 Data for all available digital permits maintained by the Seattle Department of Construction and Inspections and available through Seattle's Open Data Portal. Updated daily.
 
