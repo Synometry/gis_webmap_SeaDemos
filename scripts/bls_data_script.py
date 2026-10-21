@@ -5,11 +5,20 @@ from pathlib import Path
 import numpy as np
 import requests as re
 import pandas as pd
+from sqlalchemy import String
+from sqlalchemy.orm import Mapped, mapped_column
 import permit_db
 
 ## Database Definitions
 
-
+class InflationFactor(permit_db.TableBase):
+    __tablename__ = 'inflation_factors'
+    
+    id : Mapped[int] = mapped_column(primary_key=True)
+    iso_date : Mapped[str] = mapped_column(String(10))
+    factor : Mapped[float]
+    
+permit_db.create_table(InflationFactor)
 
 ## Data Collection
 
@@ -56,23 +65,20 @@ def main():
     id = 'CUSR0000SA0'
 
     df = df[df['series_id'] == id]
+    # use 2025's average CPI as a stand-in for Oct, 2025, for which no CPI was calculated
+    O25 = df[df['year']==2025]['value'].mean() # ignores nans
+    df.loc[(df['year']==2025) & (df['period']==10), 'value'] = O25
     # calculate (inverse) ratio of each time's CPI to Jan, 2026 CPI
     base = df.loc[(df['year'] == 2026) & (df['period'] == 1),'value'].values[0]
     df['factor'] = (base / df['value'])
     # restrict data to study period
     df = df[df['year'].between(2005,2025)]
     df['id'] = df['year'] * 100 + df['period']
-    df['iso_date'] = df['year'].astype(str) + '-' + df['period'].astype(str).str.zfill(2) + '-01'
-    df = df.rename(columns={'period':'month'})[['id', 'iso_date', 'factor']].set_index('id')
-    print(df.head(5))
-    pt = df.pivot(columns='period', index='year', values='factor')
+    df = df.rename(columns={'period':'month'})[['id', 'year', 'month', 'factor']].set_index('id')
+    print(df)
 
-    # using 2025's average CPI as stand-in for Oct, 2025, for which no CPI was calculated
-    Oct2025 = np.mean(df[df['year']==2025]['value'])
-    pt.loc[2025, 10] = base/Oct2025
-
-    pt.to_csv(table_path, float_format='%.3f')
-    print('Final dataframe:\n', pt)
+    df.to_csv(table_path, float_format='%.3f')
+    print('Final dataframe:\n', df)
 
 if __name__ == '__main__':
     main()

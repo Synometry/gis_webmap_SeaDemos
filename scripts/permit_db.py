@@ -18,21 +18,21 @@ _connect_url = URL.create(
 
 _engine = sqlalchemy.create_engine(_connect_url)
 
-def add_table(table_obj: type[TableBase]):
+def create_table(table_obj: type[TableBase]):
     assert issubclass(table_obj, TableBase), f'table_obj, {type(table_obj)} is not a subclass of \'TableBase\'!'
     with Session(_engine) as session, session.begin():
         TableBase.metadata.create_all(_engine, tables=[table_obj.__table__])
 
 # Example:
 
-class DummyTable(TableBase):
-    __tablename__ = 'dummy_table'
+# class DummyTable(TableBase):
+#     __tablename__ = 'dummy_table'
     
-    id : Mapped[int] = mapped_column(primary_key=True)
-    val1 : Mapped[float]
-    val2 : Mapped[str] = mapped_column(sqlalchemy.String(30))
+#     id : Mapped[int] = mapped_column(primary_key=True)
+#     val1 : Mapped[float]
+#     val2 : Mapped[str] = mapped_column(sqlalchemy.String(30))
     
-    def __repr__(self) -> str:
-        return 'DummyEntry(' + ', '.join([f'{x}={self.__dict__[x]!r}' for x in ['id', 'val1', 'val2']]) + ')'
+#     def __repr__(self) -> str:
+#         return 'DummyEntry(' + ', '.join([f'{x}={self.__dict__[x]!r}' for x in ['id', 'val1', 'val2']]) + ')'
 
-add_table(DummyTable)
+# create_table(DummyTable)
