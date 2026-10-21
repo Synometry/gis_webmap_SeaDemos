@@ -5,6 +5,11 @@ from pathlib import Path
 import numpy as np
 import requests as re
 import pandas as pd
+import permit_db
+
+## Database Definitions
+
+
 
 ## Data Collection
 
@@ -56,6 +61,10 @@ def main():
     df['factor'] = (base / df['value'])
     # restrict data to study period
     df = df[df['year'].between(2005,2025)]
+    df['id'] = df['year'] * 100 + df['period']
+    df['iso_date'] = df['year'].astype(str) + '-' + df['period'].astype(str).str.zfill(2) + '-01'
+    df = df.rename(columns={'period':'month'})[['id', 'iso_date', 'factor']].set_index('id')
+    print(df.head(5))
     pt = df.pivot(columns='period', index='year', values='factor')
 
     # using 2025's average CPI as stand-in for Oct, 2025, for which no CPI was calculated
