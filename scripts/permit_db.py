@@ -1,5 +1,8 @@
 from pathlib import Path
+import pandas as pd
+from pandas import DataFrame
 import sqlalchemy
+from sqlalchemy import select
 from sqlalchemy.engine import URL
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
 
@@ -18,10 +21,14 @@ _connect_url = URL.create(
 
 _engine = sqlalchemy.create_engine(_connect_url)
 
-def create_table(table_obj: type[TableBase]):
-    assert issubclass(table_obj, TableBase), f'table_obj, {type(table_obj)} is not a subclass of \'TableBase\'!'
+def create_table(table_type: type[TableBase]):
+    assert issubclass(table_type, TableBase), f'table_obj, {type(table_type)} is not a subclass of \'TableBase\'!'
     with Session(_engine) as session, session.begin():
-        TableBase.metadata.create_all(_engine, tables=[table_obj.__table__])
+        TableBase.metadata.create_all(_engine, tables=[table_type.__table__])
+
+def table_to_dataframe(table_type: type[TableBase], index_col: str | None = None) -> DataFrame:
+    return pd.read_sql_table(table_type.__tablename__, _engine, index_col=index_col)
+    
 
 # Example:
 

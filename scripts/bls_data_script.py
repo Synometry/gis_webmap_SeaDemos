@@ -11,12 +11,18 @@ import permit_db
 
 ## Database Definitions
 
+t_name = 'inflation_factors'
+
 class InflationFactor(permit_db.TableBase):
-    __tablename__ = 'inflation_factors'
+    __tablename__ = t_name
     
-    id : Mapped[int] = mapped_column(primary_key=True)
-    iso_date : Mapped[str] = mapped_column(String(10))
+    month_id : Mapped[int] = mapped_column(primary_key=True, autoincrement=False)
+    year : Mapped[int]
+    month : Mapped[int]
     factor : Mapped[float]
+    
+    def __repr__(self):
+        return 'InflationFactor('+', '.join([f'{x}:{self.__dict__[x]!r}' for x in ['month_id', 'year', 'month', 'factor']])+')'
     
 permit_db.create_table(InflationFactor)
 
@@ -57,7 +63,7 @@ def main():
     df = df.map(lambda x: x.strip() if isinstance(x, str) else x)   # Same for values
     df['value'] = pd.to_numeric(df['value'], 'coerce')
     df['period'] = df['period'].map(lambda x: int(x[1:3]))          # Convert period string to month number
-    print(f'Preview of \'{file_name}\':\n', df.head())
+    print(f'\nPreview of \'{file_name}\':\n', df.head())
 
     ## Data Processing
 
@@ -73,12 +79,17 @@ def main():
     df['factor'] = (base / df['value'])
     # restrict data to study period
     df = df[df['year'].between(2005,2025)]
-    df['id'] = df['year'] * 100 + df['period']
-    df = df.rename(columns={'period':'month'})[['id', 'year', 'month', 'factor']].set_index('id')
-    print(df)
+    df['month_id'] = df['year'] * 100 + df['period']
+    df = df.rename(columns={'period':'month'})[['month_id', 'year', 'month', 'factor']].set_index('month_id')
 
     df.to_csv(table_path, float_format='%.3f')
-    print('Final dataframe:\n', df)
+    print('\nFinal dataframe:\n', df)
+    
+def upload_to_db():
+    df = pd.read_csv(table_path, index_col='month_id')
+    df.to_sql(t_name, permit_db._engine, if_exists='replace')
+    print(permit_db.table_to_dataframe(InflationFactor, 'month_id').head(5))
 
 if __name__ == '__main__':
     main()
+    upload_to_db()
