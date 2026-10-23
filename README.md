@@ -19,10 +19,14 @@ List modules and libraries used, for purposes of reproduction/review.
 Provide links for unusual libraries.
 
 ## Data
+### Seattle Census Tracts - City of Seattle
+
+[https://data-seattlecitygis.opendata.arcgis.com/datasets/SeattleCityGIS::2020-census-tracts-seattle/about](https://data-seattlecitygis.opendata.arcgis.com/datasets/SeattleCityGIS::2020-census-tracts-seattle/about)
+
 ### CPI - Bureau of Labor Statistics
 The BLS publishes consumer price index figures - weighted sums of various products' prices to offer a snapshot of the United States' dollar's value.
 
-I took them from their website, and used them to create a table of the number of Jan, 2026 dollars equivalent to 1 dollar for the given month and year.
+I took them from their website [Link], and used them to create a table of the number of Jan, 2026 dollars equivalent to 1 dollar for the given month and year.
 ### [Permits: City of Seattle](https://data.seattle.gov/d/76t5-zqzr)
 Data for all available digital permits maintained by the Seattle Department of Construction and Inspections and available through Seattle's Open Data Portal. Updated daily.
 
