@@ -2,9 +2,11 @@ from pathlib import Path
 import pandas as pd
 from pandas import DataFrame
 import sqlalchemy
-from sqlalchemy import select
+from sqlalchemy import MetaData, select
 from sqlalchemy.engine import URL
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column
+
+metadata = MetaData()
 
 class TableBase(DeclarativeBase):
     ...
@@ -30,7 +32,7 @@ def table_to_dataframe(table_type: type[TableBase], index_col: str | None = None
     return pd.read_sql_table(table_type.__tablename__, _engine, index_col=index_col)
 
 def dataframe_to_table(df:DataFrame, table_name:str) -> None:
-    df.to_sql(table_name, _engine, if_exists='replace')
+    df.to_sql(table_name, _engine, if_exists='append')
 
 # Example:
 

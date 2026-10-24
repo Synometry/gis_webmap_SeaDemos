@@ -7,6 +7,41 @@ import numpy as np
 import requests as re
 import pandas as pd
 import geopandas as gpd
+from sqlalchemy import CheckConstraint, Column, String, Table, Integer, Float
+import permit_db
+
+## Data Definitions
+
+t_name = 'census_tracts'
+
+tract_table = Table(
+    t_name,
+    permit_db.metadata,
+    Column('geoid20', Integer, primary_key=True, autoincrement=False),
+    Column('gross_acres', Float),
+    Column('land_acres', Float),
+    Column('water_acres', Float),
+    Column('gen_alias', String(63)),
+    Column('detl_names', String(127)),
+    Column('geometry', ),
+    CheckConstraint('geometry.STIsValid() = 1')
+)
+
+class CensusTracts(permit_db.TableBase):
+    __tablename__ = t_name
+    
+    geoid20 : Mapped[int] = mapped_column(primary_key=True, autoincrement=False)
+    gross_acres : Mapped[float]
+    land_acres : Mapped[float]
+    water_acres : Mapped[float]
+    gen_alias : Mapped[str] = mapped_column(String(63))
+    detl_names : Mapped[str] = mapped_column(String(127))
+    
+    def __repr__(self):
+        return 'CensusTract('+', '.join([f'{x}:{self.__dict__[x]!r}' for x in ['geoid20', 'gross_acres', 'land_acres', 'water_acres',
+                               'gen_alias', 'detl_names']])+')'
+    
+permit_db.create_table(CensusTracts)
 
 ## Data Fetching
 
@@ -42,6 +77,11 @@ def main():
 
 def upload_to_db():
     gdf = gpd.read_file(raw_data_path)
+    gdf['geometry'] = gdf.geometry.make_valid()
+    
+    df = pd.DataFrame(gdf.drop(columns=['geometry']))
+    df['geometry'] = gdf.geometry.to_wkb()
+    
     ...
     
 if __name__ == '__main__':
