@@ -87,7 +87,7 @@ def main():
     
 def upload_to_db():
     df = pd.read_csv(table_path, index_col='month_id')
-    df.to_sql(t_name, permit_db._engine, if_exists='replace')
+    permit_db.dataframe_to_table(df, t_name)
     print(permit_db.table_to_dataframe(InflationFactor, 'month_id').head(5))
 
 if __name__ == '__main__':

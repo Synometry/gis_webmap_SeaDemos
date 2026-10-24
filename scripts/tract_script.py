@@ -10,7 +10,7 @@ import geopandas as gpd
 
 ## Data Fetching
 
-raw_data_path = Path('./cache/tractQuery.pbf')
+raw_data_path = Path('./cache/tractQuery.geojson')
 
 # End-point for ArcGIS Online layer I want
 arc_url = 'https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/2020_Census_Tracts_Seattle/FeatureServer/3/query'
@@ -31,7 +31,7 @@ def main():
             'where': '1=1',
             'outFields': fields_str,
             'outSR': '4326',
-            'f': 'pbf'
+            'f': 'geojson'
         }
         response = re.post(arc_url, headers=headers, params=post_json)
         assert response.status_code == 200, f'Post failed: {response.content}'
@@ -40,10 +40,8 @@ def main():
         with raw_data_path.open('w', encoding='utf-8') as cached_data:
             cached_data.write(response.text)
 
-def convert
-
 def upload_to_db():
-    
+    gdf = gpd.read_file(raw_data_path)
     ...
     
 if __name__ == '__main__':
