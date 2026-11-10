@@ -60,7 +60,10 @@ def fetch_data():
 
 def upload_to_db():
     gdf = gpd.read_file(raw_data_path)
+    print(len(gdf), gdf.head(5))
     permit_db.geodataframe_to_table(gdf, tract_table)
+    gdf = permit_db.table_to_geodataframe(tract_table)
+    print(len(gdf), gdf.head(5))
     
 if __name__ == '__main__':
     fetch_data()

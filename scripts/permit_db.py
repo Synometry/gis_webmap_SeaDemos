@@ -1,12 +1,17 @@
 # Holden Bailey, 2026
 
-from pathlib import Path
+import datetime
 from geopandas import GeoDataFrame
 import pandas as pd
 from pandas import DataFrame
 import sqlalchemy
 from sqlalchemy import LargeBinary, MetaData, Table, select, text, inspect
 from sqlalchemy.engine import URL
+import geoalchemy2.shape as shp
+
+def log(*messages: str):
+    msg = ' '.join([str(m) for m in messages])
+    print(f'[{datetime.datetime.now().strftime('%y:%m:%d %I:%M:%S %p')}] [DB Interface] {msg}')
 
 metadata = MetaData()
 
@@ -22,10 +27,18 @@ _connect_url = URL.create(
 
 _engine = sqlalchemy.create_engine(_connect_url)
 
+def table_exists(table: Table) -> bool: return inspect(_engine).has_table(table.name)
+
 def create_table(table_schema: Table):
-    print(table_schema.name)
-    if inspect(_engine).has_table(table_schema.name): table_schema.drop(bind=_engine)
+    log(f'Creating table \"{table_schema.name}\"')
+    if table_exists(table_schema):
+        log(f'Table \"{table_schema.name}\" already exists. Dropping for replacement...')
+        table_schema.drop(bind=_engine)
     metadata.create_all(_engine, tables=[table_schema])
+    if table_exists(table_schema):
+        log(f'Table \"{table_schema.name}\" created')
+    else:
+        log(f'Table creation unsuccessful!')
 
 def table_to_dataframe(table_type, index_col: str | None = None) -> DataFrame:
     return pd.read_sql_table(table_type.__tablename__, _engine, index_col=index_col)
@@ -47,6 +60,13 @@ def geodataframe_to_table(gdf:GeoDataFrame, table_schema:Table) -> None:
             f'FROM {temp_table_name}'
             ))
     Table(temp_table_name, metadata, autoload_with=_engine).drop(bind=_engine)
+
+def table_to_geodataframe(table_schema: Table, index_col: str | None = None) -> GeoDataFrame:
+    log(f'Fetching table \"{table_schema.name}\" as {GeoDataFrame}')
+    df = pd.read_sql_table(table_schema.name, _engine, index_col)
+    gseries = df['geometry'].apply(shp.to_shape)
+    gdf = GeoDataFrame(df, geometry=gseries)
+    return gdf
 
 # I expect to not use this
 def table_delete_all_rows(table_schema: Table) -> None:
