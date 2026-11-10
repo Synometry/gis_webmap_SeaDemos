@@ -76,18 +76,3 @@ def table_delete_all_rows(table_schema: Table) -> None:
         # ^^^ TRUNCATE is faster and cheaper than DELETE
         name = str(table_schema.name)
         conn.execute(text(f'TRUNCATE TABLE {name}'))
-    ...
-
-# Example:
-
-# class DummyTable(TableBase):
-#     __tablename__ = 'dummy_table'
-    
-#     id : Mapped[int] = mapped_column(primary_key=True)
-#     val1 : Mapped[float]
-#     val2 : Mapped[str] = mapped_column(sqlalchemy.String(30))
-    
-#     def __repr__(self) -> str:
-#         return 'DummyEntry(' + ', '.join([f'{x}={self.__dict__[x]!r}' for x in ['id', 'val1', 'val2']]) + ')'
-
-# create_table(DummyTable)
