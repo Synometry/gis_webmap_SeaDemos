@@ -8,10 +8,8 @@ import sqlalchemy
 from sqlalchemy import LargeBinary, MetaData, Table, select, text, inspect
 from sqlalchemy.engine import URL
 import geoalchemy2.shape as shp
+import log
 
-def log(*messages: str):
-    msg = ' '.join([str(m) for m in messages])
-    print(f'[{datetime.datetime.now().strftime('%y:%m:%d %I:%M:%S %p')}] [DB Interface] {msg}')
 
 metadata = MetaData()
 
