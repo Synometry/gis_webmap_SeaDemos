@@ -9,9 +9,12 @@ import pandas as pd
 import geopandas as gpd
 from sqlalchemy import BigInteger, CheckConstraint, Column, String, Table, Integer, Float
 from geoalchemy2 import Geography, Geometry
+from log import log
 import permit_db
 
 ## Data Definitions
+
+log('Building & submitting table schema')
 
 t_name = 'census_tracts'
 
@@ -38,6 +41,7 @@ raw_data_path = Path('./cache/tractQuery.geojson')
 arc_url = 'https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/2020_Census_Tracts_Seattle/FeatureServer/3/query'
 
 def fetch_data():
+    log('Beginning to fetch data')
     if not raw_data_path.exists():
         # u_a = 'Holden Bailey'
         headers = {

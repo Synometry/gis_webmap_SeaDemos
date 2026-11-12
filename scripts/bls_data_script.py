@@ -5,26 +5,23 @@ from pathlib import Path
 import numpy as np
 import requests as re
 import pandas as pd
-from sqlalchemy import String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import Table, Column, Integer, Float
 import permit_db
 
-## Database Definitions
+## Data Definitions
 
 t_name = 'inflation_factors'
 
-class InflationFactor(permit_db.TableBase):
-    __tablename__ = t_name
+inflation_table = Table(
+    t_name,
+    permit_db.metadata,
+    Column('month_id', Integer, primary_key=True, autoincrement=False),
+    Column('year', Integer),
+    Column('month', Integer),
+    Column('factor', Float)
+)
     
-    month_id : Mapped[int] = mapped_column(primary_key=True, autoincrement=False)
-    year : Mapped[int]
-    month : Mapped[int]
-    factor : Mapped[float]
-    
-    def __repr__(self):
-        return 'InflationFactor('+', '.join([f'{x}:{self.__dict__[x]!r}' for x in ['month_id', 'year', 'month', 'factor']])+')'
-    
-permit_db.create_table(InflationFactor)
+permit_db.create_table(inflation_table)
 
 ## Data Collection
 
@@ -36,7 +33,7 @@ file_name = bls_url.split('/')[-1]
 
 temp_path = Path(f'./cache/{file_name}')
 
-def main():
+def fetch_data():
     file = None
     if temp_path.exists():
         file = temp_path
@@ -86,10 +83,10 @@ def main():
     print('\nFinal dataframe:\n', df)
     
 def upload_to_db():
-    df = pd.read_csv(table_path, index_col='month_id')
+    df = pd.read_csv(table_path)
     permit_db.dataframe_to_table(df, t_name)
-    print(permit_db.table_to_dataframe(InflationFactor, 'month_id').head(5))
+    print(permit_db.table_to_dataframe(inflation_table, 'month_id').head(5))
 
 if __name__ == '__main__':
-    main()
+    fetch_data()
     upload_to_db()

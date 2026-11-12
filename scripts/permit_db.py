@@ -9,7 +9,9 @@ from sqlalchemy import LargeBinary, MetaData, Table, select, text, inspect
 from sqlalchemy.engine import URL
 import geoalchemy2.shape as shp
 import log
+log.register('Permit DB')
 
+log.log('Building database connection engine...')
 
 metadata = MetaData()
 
@@ -25,31 +27,40 @@ _connect_url = URL.create(
 
 _engine = sqlalchemy.create_engine(_connect_url)
 
+log.log('Engine created')
+
 def table_exists(table: Table) -> bool: return inspect(_engine).has_table(table.name)
 
 def create_table(table_schema: Table):
-    log(f'Creating table \"{table_schema.name}\"')
+    log.log(f'Creating table \"{table_schema.name}\"')
     if table_exists(table_schema):
-        log(f'Table \"{table_schema.name}\" already exists. Dropping for replacement...')
+        log.log(f'Table \"{table_schema.name}\" already exists. Dropping for replacement...')
         table_schema.drop(bind=_engine)
     metadata.create_all(_engine, tables=[table_schema])
     if table_exists(table_schema):
-        log(f'Table \"{table_schema.name}\" created')
+        log.log(f'Table \"{table_schema.name}\" created')
     else:
-        log(f'Table creation unsuccessful!')
+        log.log(f'Table creation unsuccessful!')
 
-def table_to_dataframe(table_type, index_col: str | None = None) -> DataFrame:
-    return pd.read_sql_table(table_type.__tablename__, _engine, index_col=index_col)
+def table_to_dataframe(table_schema: Table, index_col: str | None = None) -> DataFrame:
+    log.log(f'Fetching table \"{table_schema.name}\" as {DataFrame}')
+    if not table_exists(table_schema):
+        log.log(f'Fetching failed! No such table named \"{table_schema.name}\"')
+        return None
+    return pd.read_sql_table(table_schema.name, _engine, index_col=index_col)
 
 def dataframe_to_table(df:DataFrame, table_name:str) -> None:
     df.to_sql(table_name, _engine, if_exists='delete_rows', index=False)
 
 def geodataframe_to_table(gdf:GeoDataFrame, table_schema:Table) -> None:
+    log.log(f'Beginning insertion of GeoDataFrame into table \"{table_schema.name}\"...')
     table_name = str(table_schema.name)
     temp_table_name = table_name + '_temp'
     gdf['geom_wkb'] = gdf.geometry.make_valid().to_wkb()
+    log.log(f'Inserting data into temporary table \"{temp_table_name}\"')
     gdf.drop(columns='geometry')\
         .to_sql(temp_table_name, _engine, if_exists='delete_rows', index=False, dtype={'geom_wkb':LargeBinary})
+    log.log(f'Converting geometry and moving data into table \"{temp_table_name}\"')
     col_names = ', '.join([f'{c}' for c in gdf.columns if not c in ['geometry', 'geom_wkb']])
     with _engine.begin() as conn:
         conn.execute(text(\
@@ -57,10 +68,14 @@ def geodataframe_to_table(gdf:GeoDataFrame, table_schema:Table) -> None:
             f'SELECT {col_names}, geometry::STGeomFromWKB(geom_wkb, 4326).MakeValid() '
             f'FROM {temp_table_name}'
             ))
+    log.log(f'Dropping temporary table')
     Table(temp_table_name, metadata, autoload_with=_engine).drop(bind=_engine)
 
 def table_to_geodataframe(table_schema: Table, index_col: str | None = None) -> GeoDataFrame:
-    log(f'Fetching table \"{table_schema.name}\" as {GeoDataFrame}')
+    log.log(f'Fetching table \"{table_schema.name}\" as {GeoDataFrame}')
+    if not table_exists(table_schema):
+        log.log(f'Fetching failed! No such table named \"{table_schema.name}\"')
+        return None
     df = pd.read_sql_table(table_schema.name, _engine, index_col)
     gseries = df['geometry'].apply(shp.to_shape)
     gdf = GeoDataFrame(df, geometry=gseries)
