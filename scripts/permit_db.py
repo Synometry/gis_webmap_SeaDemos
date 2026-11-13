@@ -50,7 +50,9 @@ def table_to_dataframe(table_schema: Table, index_col: str | None = None) -> Dat
     return pd.read_sql_table(table_schema.name, _engine, index_col=index_col)
 
 def dataframe_to_table(df:DataFrame, table_name:str) -> None:
+    log.log(f'Inserting data into database table \"{table_name}\"')
     df.to_sql(table_name, _engine, if_exists='delete_rows', index=False)
+    log.log('Insert complete')
 
 def geodataframe_to_table(gdf:GeoDataFrame, table_schema:Table) -> None:
     log.log(f'Beginning insertion of GeoDataFrame into table \"{table_schema.name}\"...')
@@ -70,6 +72,7 @@ def geodataframe_to_table(gdf:GeoDataFrame, table_schema:Table) -> None:
             ))
     log.log(f'Dropping temporary table')
     Table(temp_table_name, metadata, autoload_with=_engine).drop(bind=_engine)
+    log.log('Insertion complete')
 
 def table_to_geodataframe(table_schema: Table, index_col: str | None = None) -> GeoDataFrame:
     log.log(f'Fetching table \"{table_schema.name}\" as {GeoDataFrame}')

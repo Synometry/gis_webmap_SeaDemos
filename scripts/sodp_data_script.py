@@ -7,6 +7,8 @@ import requests as re
 import pandas as pd
 import geopandas as gpd
 
+## Data Definitions
+
 ## Data Fetching
 
 raw_data_path = Path('./cache/permitQuery.csv')
@@ -14,13 +16,13 @@ raw_data_path = Path('./cache/permitQuery.csv')
 # End-point for Bureau of Labor Statistics file I want
 soda_url = 'https://data.seattle.gov/api/v3/views/76t5-zqzr/query.csv'
 
-def main():
+def fetch_data():
     file = None
     if raw_data_path.exists():
         file = raw_data_path
     else:
-        # u_a = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36'
-        u_a = 'H. Bailey @ hobbes3303@gmail.com'
+        # My browser's user agent
+        u_a = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/155.0.0.0 Safari/537.36'
         headers = {
             'User-Agent': u_a, 
             'Accept': 'text/csv;charset=utf-8',
@@ -58,4 +60,4 @@ def main():
     print(df.head(5))
     
 if __name__ == '__main__':
-    main()
+    fetch_data()

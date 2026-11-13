@@ -1,4 +1,4 @@
-# tract_script.py
+# tract_data_script.py
 # Holden Bailey 2026
 
 from io import StringIO
@@ -9,8 +9,11 @@ import pandas as pd
 import geopandas as gpd
 from sqlalchemy import BigInteger, CheckConstraint, Column, String, Table, Integer, Float
 from geoalchemy2 import Geography, Geometry
-from log import log
+from common import base_from_url
+from log import log, register
 import permit_db
+
+register('Tract Data Script')
 
 ## Data Definitions
 
@@ -41,8 +44,9 @@ raw_data_path = Path('./cache/tractQuery.geojson')
 arc_url = 'https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/2020_Census_Tracts_Seattle/FeatureServer/3/query'
 
 def fetch_data():
-    log('Beginning to fetch data')
+    log('Beginning to fetch census tract data')
     if not raw_data_path.exists():
+        log(f'Cached data not found - downloading from {base_from_url(arc_url)}')
         # u_a = 'Holden Bailey'
         headers = {
             # 'User-Agent': u_a, 
@@ -56,18 +60,28 @@ def fetch_data():
             'outSR': '4326',
             'f': 'geojson'
         }
+        log('Submitting POST request...')
         response = re.post(arc_url, headers=headers, params=post_json)
-        assert response.status_code == 200, f'Post failed: {response.content}'
-        print('Response content type:', response.headers['Content-type'], '\nPreview:', response.text[:100])
+        log(f'Response code {response.status_code}')
+        if response.status_code != 200:
+            log(f'Post failed: {response.content}')
+            exit(1)
+        log('Response content type:', response.headers['Content-type'])
+        log('Preview:', response.text[:50])
         with raw_data_path.open('w', encoding='utf-8') as cached_data:
             cached_data.write(response.text)
+        log(f'Wrote response data to cache @ \"{raw_data_path}\"')
+    else: log('Found cached data!')
 
 def upload_to_db():
+    log('Moving tract data to database')
     gdf = gpd.read_file(raw_data_path)
-    print(len(gdf), gdf.head(5))
+    log(f'Entries in data prior to upload: {len(gdf)}', '\nPreview:\n', gdf.head(5))
+    log('Uploading to database...')
     permit_db.geodataframe_to_table(gdf, tract_table)
+    log('Verifying data in database...')
     gdf = permit_db.table_to_geodataframe(tract_table)
-    print(len(gdf), gdf.head(5))
+    log(f'Entries in database data: {len(gdf)}', '\nPreview:\n', gdf.head(5))
     
 if __name__ == '__main__':
     fetch_data()
