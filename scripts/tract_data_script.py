@@ -83,6 +83,10 @@ def upload_to_db():
     gdf = permit_db.table_to_geodataframe(tract_table)
     log(f'Entries in database data: {len(gdf)}', '\nPreview:\n', gdf.head(5))
     
+def dissolve_tracts():
+    
+    permit_db.unionAggregate(tract_table, tract_table.columns.gen_alias)
+    
 if __name__ == '__main__':
     fetch_data()
     upload_to_db()

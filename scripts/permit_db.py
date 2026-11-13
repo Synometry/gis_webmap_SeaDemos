@@ -5,7 +5,7 @@ from geopandas import GeoDataFrame
 import pandas as pd
 from pandas import DataFrame
 import sqlalchemy
-from sqlalchemy import LargeBinary, MetaData, Table, select, text, inspect
+from sqlalchemy import Column, LargeBinary, MetaData, Table, func, select, text, inspect
 from sqlalchemy.engine import URL
 import geoalchemy2.shape as shp
 import log
@@ -56,7 +56,7 @@ def dataframe_to_table(df:DataFrame, table_name:str) -> None:
 
 def geodataframe_to_table(gdf:GeoDataFrame, table_schema:Table) -> None:
     log.log(f'Beginning insertion of GeoDataFrame into table \"{table_schema.name}\"...')
-    table_name = str(table_schema.name)
+    table_name = table_schema.name
     temp_table_name = table_name + '_temp'
     gdf['geom_wkb'] = gdf.geometry.make_valid().to_wkb()
     log.log(f'Inserting data into temporary table \"{temp_table_name}\"')
@@ -92,3 +92,10 @@ def table_delete_all_rows(table_schema: Table) -> None:
         # ^^^ TRUNCATE is faster and cheaper than DELETE
         name = str(table_schema.name)
         conn.execute(text(f'TRUNCATE TABLE {name}'))
+        
+def spatial_union(table_schema: Table, groupby: Column | None = None, aggregates: dict[Column, tuple[func, Column]] = None) -> None:
+    # assumptions:
+    #   table_schema has a 'geometry' column
+    #   groupby is in table_schema
+    func.GEOMETRY
+    ...
