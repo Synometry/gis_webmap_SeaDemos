@@ -23,6 +23,8 @@ Provide links for unusual libraries.
 
 [https://data-seattlecitygis.opendata.arcgis.com/datasets/SeattleCityGIS::2020-census-tracts-seattle/about](https://data-seattlecitygis.opendata.arcgis.com/datasets/SeattleCityGIS::2020-census-tracts-seattle/about)
 
+dissolved geometry by "gen_alias" within the database
+
 ### CPI - Bureau of Labor Statistics
 The BLS publishes consumer price index figures - weighted sums of various products' prices to offer a snapshot of the United States' dollar's value.
 

@@ -7,7 +7,7 @@ import numpy as np
 import requests as re
 import pandas as pd
 import geopandas as gpd
-from sqlalchemy import BigInteger, CheckConstraint, Column, String, Table, Integer, Float
+from sqlalchemy import BigInteger, CheckConstraint, Column, String, Table, Integer, Float, func
 from geoalchemy2 import Geography, Geometry
 from common import base_from_url
 from log import log, register
@@ -19,10 +19,10 @@ register('Tract Data Script')
 
 log('Building & submitting table schema')
 
-t_name = 'census_tracts'
+t_name_tracts = 'census_tracts'
 
 tract_table = Table(
-    t_name,
+    t_name_tracts,
     permit_db.metadata,
     Column('geoid20', BigInteger, primary_key=True, autoincrement=False),
     Column('gross_acres', Float),
@@ -35,6 +35,22 @@ tract_table = Table(
 )
     
 permit_db.create_table(tract_table)
+
+t_name_regions = 'tract_regions'
+
+region_table = Table(
+    t_name_regions,
+    permit_db.metadata,
+    Column('gen_alias', String(63)),
+    Column('geoid20', BigInteger, primary_key=True, autoincrement=False),
+    Column('gross_acres', Float),
+    Column('land_acres', Float),
+    Column('water_acres', Float),
+    Column('geometry', Geometry(geometry_type='GEOMETRY', srid=4326)),
+    CheckConstraint('geometry.STIsValid() = 1')
+)
+
+permit_db.create_table(region_table)
 
 ## Data Fetching
 
@@ -84,9 +100,15 @@ def upload_to_db():
     log(f'Entries in database data: {len(gdf)}', '\nPreview:\n', gdf.head(5))
     
 def dissolve_tracts():
-    
-    permit_db.unionAggregate(tract_table, tract_table.columns.gen_alias)
+    agg = ([
+        (tract_table.c.geoid20, func.min, region_table.c.geoid20),
+        (tract_table.c.gross_acres, func.sum, region_table.c.gross_acres),
+        (tract_table.c.land_acres, func.sum, region_table.c.land_acres),
+        (tract_table.c.water_acres, func.sum, region_table.c.water_acres)
+    ])
+    permit_db.spatial_union(tract_table, region_table, tract_table.c.gen_alias, agg)
     
 if __name__ == '__main__':
     fetch_data()
     upload_to_db()
+    dissolve_tracts()
