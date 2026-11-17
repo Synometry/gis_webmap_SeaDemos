@@ -17,7 +17,7 @@ register('Tract Data Script')
 
 ## Data Definitions
 
-log('Building & submitting table schema')
+log('Building table schemata')
 
 t_name_tracts = 'census_tracts'
 
@@ -34,8 +34,6 @@ tract_table = Table(
     CheckConstraint('geometry.STIsValid() = 1')
 )
     
-permit_db.create_table(tract_table)
-
 t_name_regions = 'tract_regions'
 
 region_table = Table(
@@ -50,11 +48,19 @@ region_table = Table(
     CheckConstraint('geometry.STIsValid() = 1')
 )
 
-permit_db.create_table(region_table)
-
+def reset_tables():
+    tables = [region_table, tract_table]
+    log('Submitting table schemata for reset:', ', '.join([f'\"{t.name}\"' for t in tables]))
+    [permit_db.create_table(table) for table in tables]
+    
 ## Data Fetching
 
-raw_data_path = Path('./cache/tractQuery.geojson')
+cache_dir = Path('./cache/')
+raw_data_path = cache_dir / Path('tractQuery.geojson')
+
+ext_data_dir = Path('./ext_data/')
+out_tracts_path = ext_data_dir / Path('seattle_tracts.geojson')
+out_regions_path = ext_data_dir / Path('seattle_regions.geojson')
 
 # End-point for ArcGIS Online layer I want
 arc_url = 'https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/2020_Census_Tracts_Seattle/FeatureServer/3/query'
@@ -108,7 +114,19 @@ def dissolve_tracts():
     ])
     permit_db.spatial_union(tract_table, region_table, tract_table.c.gen_alias, agg)
     
+def export_as_geojson():
+    log(f'Downloading data to \"{ext_data_dir}\"')
+    tract_gdf = permit_db.table_to_geodataframe(tract_table)
+    out_tracts_path.write_text(tract_gdf.to_json())
+    log(f'Table \"{tract_table.name}\" downloaded to {out_tracts_path}')
+    region_gdf = permit_db.table_to_geodataframe(region_table)
+    out_regions_path.write_text(region_gdf.to_json())
+    log(f'Table \"{region_table.name}\" downloaded to {out_regions_path}')
+    ...
+    
 if __name__ == '__main__':
+    reset_tables()
     fetch_data()
     upload_to_db()
     dissolve_tracts()
+    export_as_geojson()
