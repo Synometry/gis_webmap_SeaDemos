@@ -1,5 +1,7 @@
-# {Project Title}
+# Seattle Permitting as History
 {short summary - name all tools, languages, and libraries - explicitly state results}
+
+Tool-driven project: Aim to use MS SQL, SQLAlchemy, and the ArcGIS suite in the production of an interactible webmap to demonstrate competence.
 
 {live deployment}
 
@@ -56,6 +58,18 @@ Noteworthy fields:
 3. Housing "Units" are intended to refer to entire structures, yet many permit applicants clearly treat it as "apartment units", uncorrected by the SDCI.
 
 ## {Methods/Methodology (name/explain each step)}
+### Broad Script Design
+#### SQLAlchemy: Core vs. ORM Model
+A series of self-authored Python 3 scripts collect data, transfer it between project directories and database, and perform the data transformations. In service of the latter two items, I make heavy use of the SQLAlchemy module. Of the two styles of access available within that module - "Core" and "Object Relational Mapper" (or *ORM*) - I opted for the somewhat lower-level *Core* model.
+
+Core is better suited for both the expected analysis and the demonstrative aims of this project (beyond typically-stated advantages of breadth of control) ofr the following reasons:
+
+- Fine-grain control: I require access to functionality that bypasses ORM for Core functions anyway, often for enforcing type parity between Python dataframes and MS SQL tables.
+- Dialect support: ORM does not natively support functionality unique to T-SQL. The infrastructure required is simpler/cheaper when accomplished through Core.
+- Proximity to SQL: Core's functionality heavily mirrors SQL and in a couple heavily-used functions, I execute raw SQL strings.
+### Seattle Municipal Census Tracts
+#### SQL: Geometry vs. Geography
+SQL supports two different data types for representing spatial data. *Geometry* treats data as flat, as if occurring on a 2D plane, while *Geography* treats data as existing on a curved ellipsoid. While Geography models my data closest to how it occurs in nature, I chose Geometry to represent my data database-side.
 ### Inflation Data
 I used a file containing yearly, seasonally-adjusted CPI values from the Bureau of Labor Statistics to calculate inflation.
 
