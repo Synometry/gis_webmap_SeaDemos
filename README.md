@@ -69,7 +69,9 @@ Core is better suited for both the expected analysis and the demonstrative aims 
 - Proximity to SQL: Core's functionality heavily mirrors SQL and in a couple heavily-used functions, I execute raw SQL strings.
 ### Seattle Municipal Census Tracts
 #### SQL: Geometry vs. Geography
-SQL supports two different data types for representing spatial data. *Geometry* treats data as flat, as if occurring on a 2D plane, while *Geography* treats data as existing on a curved ellipsoid. While Geography models my data closest to how it occurs in nature, I chose Geometry to represent my data database-side.
+SQL supports two different data types for representing spatial data. *Geometry* treats data as flat, as if occurring on a 2D plane, while *Geography* treats data as existing on a curved ellipsoid. The choice is mostly arbitrary because the projections of my datasets can slot into either type without reprojection and the operations I'm performing on the data are unaffected by assumed curvature.
+
+I opted for Geometry to represent my data database-side simply for an assumed speed advantage.
 ### Inflation Data
 I used a file containing yearly, seasonally-adjusted CPI values from the Bureau of Labor Statistics to calculate inflation.
 
