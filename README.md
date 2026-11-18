@@ -21,11 +21,23 @@ List modules and libraries used, for purposes of reproduction/review.
 Provide links for unusual libraries.
 
 ## Data
-### Seattle Census Tracts - City of Seattle
+### [Seattle Census Tracts - City of Seattle](https://data-seattlecitygis.opendata.arcgis.com/datasets/SeattleCityGIS::2020-census-tracts-seattle/about)
 
-[https://data-seattlecitygis.opendata.arcgis.com/datasets/SeattleCityGIS::2020-census-tracts-seattle/about](https://data-seattlecitygis.opendata.arcgis.com/datasets/SeattleCityGIS::2020-census-tracts-seattle/about)
+Census tracts (comprised of census blocks) within the City of Seattle. Some blocks along the southern boundary of the city have been left off.
 
-dissolved geometry by "gen_alias" within the database
+|Name|Description|
+|-|-|
+|GEOID20|The ID assigned to this 2020 census tract|
+|GROSS_ACRES<sup>1</sup>|Total coverage of census tract area|
+|LAND_ACRES|Land coverage|
+|WATER_ACRES|Water coverage|
+|GEN_ALIAS|The name of the Community Reporting Area the tract belongs to|
+|DETL_NAMES<sup>2</sup>|The names of other neighborhoods this tract is a part of|
+
+1. The name of the field GROSS_ACRES suggests a sum of LAND_ACRES and WATER_ACRES, but I found this is never the case. GROSS_ACRES matches my own calculations within 400 sqft (see: eval_acre_figs() in tract_data_script.py), and LAND_ACRES is likewise extremely close to GROSS_ACRES when there is no water coverage. I couldn't find any documentation of this discrepency, so I have made do with the assumptions that some aspect of methodology may consider a unit of area as both land and water, and that the waterline used to calculate land may be different than that for water.
+2. As designated in their associated Community Reporting Areas
+
+I dissolve boundaries between polygons in this dataset to produce a dataset of CRA polygons (see Methodology for details). The derived dataset shares all fields with its parent except "DETL_NAMES", and the three coverage figures are calculated by the sum of the figures of their constituent tracts.
 
 ### CPI - Bureau of Labor Statistics
 The BLS publishes consumer price index figures - weighted sums of various products' prices to offer a snapshot of the United States' dollar's value.
@@ -68,6 +80,10 @@ Core is better suited for both the expected analysis and the demonstrative aims 
 - Dialect support: ORM does not natively support functionality unique to T-SQL. The infrastructure required is simpler/cheaper when accomplished through Core.
 - Proximity to SQL: Core's functionality heavily mirrors SQL and in a couple heavily-used functions, I execute raw SQL strings.
 ### Seattle Municipal Census Tracts
+I wanted to provide spatially-aggregated figures (e.g. "average permits per year in the Ballard neighborhood"), which meant choosing between a few spatial granularities: census blocks, census tracts (comprised of census blocks), and community reporting areas or "CRA" (which handily align to census tracts).
+
+I prioritized accessibility and chose the community reporting area representation, as that would let me refer to spatial regions by their English neighborhood names. While that was the primary level of division, I also wanted to offer a more granular look at the figures. So I elected to begin with the census tract dataset and use that to produce an additional set of polygons representing CRAs.
+
 #### SQL: Geometry vs. Geography
 SQL supports two different data types for representing spatial data. *Geometry* treats data as flat, as if occurring on a 2D plane, while *Geography* treats data as existing on a curved ellipsoid. The choice is mostly arbitrary because the projections of my datasets can slot into either type without reprojection and the operations I'm performing on the data are unaffected by assumed curvature.
 

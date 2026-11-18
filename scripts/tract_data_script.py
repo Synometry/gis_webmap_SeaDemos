@@ -124,9 +124,20 @@ def export_as_geojson():
     log(f'Table \"{region_table.name}\" downloaded to {out_regions_path}')
     ...
     
+def eval_acre_figs():
+    log('Evaluating land measurement errors...')
+    gdf = gpd.read_file(raw_data_path)
+    gdf['error'] = gdf['GROSS_ACRES'] - (gdf['LAND_ACRES'] + gdf['WATER_ACRES'])
+    gdf['acreage'] = gdf.to_crs('2926').geometry.area / 43560 # Ft/Acre
+    gdf['error2'] = gdf['GROSS_ACRES'] - gdf['acreage']
+    log(gdf.drop(columns=['DETL_NAMES', 'GEOID20']).sort_values('error'))
+    log(gdf['error2'].describe())
+    
 if __name__ == '__main__':
     reset_tables()
     fetch_data()
+    # eval_acre_figs()
     upload_to_db()
     dissolve_tracts()
     export_as_geojson()
+    
