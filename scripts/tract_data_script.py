@@ -34,10 +34,10 @@ tract_table = Table(
     CheckConstraint('geometry.STIsValid() = 1')
 )
     
-t_name_regions = 'tract_regions'
+t_name_cra = 'reporting_areas'
 
-region_table = Table(
-    t_name_regions,
+cra_table = Table(
+    t_name_cra,
     permit_db.metadata,
     Column('gen_alias', String(63)),
     Column('geoid20', BigInteger, primary_key=True, autoincrement=False),
@@ -49,7 +49,7 @@ region_table = Table(
 )
 
 def reset_tables():
-    tables = [region_table, tract_table]
+    tables = [cra_table, tract_table]
     log('Submitting table schemata for reset:', ', '.join([f'\"{t.name}\"' for t in tables]))
     [permit_db.create_table(table) for table in tables]
     
@@ -60,7 +60,7 @@ raw_data_path = cache_dir / Path('tractQuery.geojson')
 
 ext_data_dir = Path('./ext_data/')
 out_tracts_path = ext_data_dir / Path('seattle_tracts.geojson')
-out_regions_path = ext_data_dir / Path('seattle_regions.geojson')
+out_cras_path = ext_data_dir / Path('seattle_cras.geojson')
 
 # End-point for ArcGIS Online layer I want
 arc_url = 'https://services.arcgis.com/ZOyb2t4B0UYuYNYH/arcgis/rest/services/2020_Census_Tracts_Seattle/FeatureServer/3/query'
@@ -107,21 +107,21 @@ def upload_to_db():
     
 def dissolve_tracts():
     agg = ([
-        (tract_table.c.geoid20, func.min, region_table.c.geoid20),
-        (tract_table.c.gross_acres, func.sum, region_table.c.gross_acres),
-        (tract_table.c.land_acres, func.sum, region_table.c.land_acres),
-        (tract_table.c.water_acres, func.sum, region_table.c.water_acres)
+        (tract_table.c.geoid20, func.min, cra_table.c.geoid20),
+        (tract_table.c.gross_acres, func.sum, cra_table.c.gross_acres),
+        (tract_table.c.land_acres, func.sum, cra_table.c.land_acres),
+        (tract_table.c.water_acres, func.sum, cra_table.c.water_acres)
     ])
-    permit_db.spatial_union(tract_table, region_table, tract_table.c.gen_alias, agg)
+    permit_db.spatial_union(tract_table, cra_table, tract_table.c.gen_alias, agg)
     
 def export_as_geojson():
     log(f'Downloading data to \"{ext_data_dir}\"')
     tract_gdf = permit_db.table_to_geodataframe(tract_table)
     out_tracts_path.write_text(tract_gdf.to_json())
     log(f'Table \"{tract_table.name}\" downloaded to {out_tracts_path}')
-    region_gdf = permit_db.table_to_geodataframe(region_table)
-    out_regions_path.write_text(region_gdf.to_json())
-    log(f'Table \"{region_table.name}\" downloaded to {out_regions_path}')
+    region_gdf = permit_db.table_to_geodataframe(cra_table)
+    out_cras_path.write_text(region_gdf.to_json())
+    log(f'Table \"{cra_table.name}\" downloaded to {out_cras_path}')
     ...
     
 def eval_acre_figs():

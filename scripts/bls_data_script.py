@@ -27,9 +27,11 @@ inflation_table = Table(
     Column('factor', Float)
 )
     
-permit_db.create_table(inflation_table)
+def reset_tables():
+    log(f'Resetting table \"{inflation_table}\"')
+    permit_db.create_table(inflation_table)
 
-## Data Collection
+## Data Fetching
 
 table_path = Path('./ext_data/inflation.csv')
 
@@ -85,10 +87,12 @@ def fetch_data():
     id = 'CUSR0000SA0'
 
     df = df[df['series_id'] == id]
-    # use 2025's average CPI as a stand-in for Oct, 2025, for which no CPI was calculated
-    O25 = df[df['year']==2025]['value'].mean() # ignores nans
+    # use geometric interpolation of Sept/Nov CPI as a stand-in for Oct, 2025, for which no CPI was calculated
+    S25 = df.loc[(df['year']==2025) & (df['period']==9), 'value'].array[0]
+    N25 = df.loc[(df['year']==2025) & (df['period']==11), 'value'].array[0]
+    O25 = np.sqrt(S25 * N25)
     df.loc[(df['year']==2025) & (df['period']==10), 'value'] = O25
-    # calculate (inverse) ratio of each time's CPI to Jan, 2026 CPI
+    # calculate ratio of each period's CPI to Jan, 2026 CPI
     base = df.loc[(df['year'] == 2026) & (df['period'] == 1),'value'].values[0]
     df['factor'] = (base / df['value'])
     # restrict data to study period
@@ -112,4 +116,4 @@ def upload_to_db():
 
 if __name__ == '__main__':
     fetch_data()
-    upload_to_db()
+    #upload_to_db()

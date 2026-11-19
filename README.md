@@ -43,6 +43,8 @@ I dissolve boundaries between polygons in this dataset to produce a dataset of C
 The BLS publishes consumer price index figures - weighted sums of various products' prices to offer a snapshot of the United States' dollar's value.
 
 I took them from their website [Link], and used them to create a table of the number of Jan, 2026 dollars equivalent to 1 dollar for the given month and year.
+
+No data was collected during October '25 and part of Nov '25 - no CPI was reported for that October. I use the geometric interpolation of November 2025 and the September of that year as an imperfect stand-in.
 ### [Permits: City of Seattle](https://data.seattle.gov/d/76t5-zqzr)
 Data for all available digital permits maintained by the Seattle Department of Construction and Inspections and available through Seattle's Open Data Portal. Updated daily.
 
