@@ -39,18 +39,38 @@ Census tracts (comprised of census blocks) within the City of Seattle. Some bloc
 
 I dissolve boundaries between polygons in this dataset to produce a dataset of CRA polygons (see Methodology for details). The derived dataset shares all fields with its parent except "DETL_NAMES", and the three coverage figures are calculated by the sum of the figures of their constituent tracts.
 
-### CPI - Bureau of Labor Statistics
-The BLS publishes consumer price index figures - weighted sums of various products' prices to offer a snapshot of the United States' dollar's value.
+### [CPI - Bureau of Labor Statistics](https://download.bls.gov/pub/time.series/cu/)
 
-I took them from their website [Link], and used them to create a table of the number of Jan, 2026 dollars equivalent to 1 dollar for the given month and year.
+Downloadable from their website (```cu.data.1.AllItems```). I use it to create a table of the number of Jan, 2026 dollars equivalent to 1 dollar for the given month and year.
 
-No data was collected during October '25 and part of Nov '25 - no CPI was reported for that October. I use the geometric interpolation of November 2025 and the September of that year as an imperfect stand-in.
+#### Relevant fields:
+
+|Name|Description|
+|-|-|
+|series_id<sup>1</sup>|the id of the data series|
+|year||
+|period|month (1-12)|
+|value<sup>2</sup>|calculated CPI|
+
+1. Many series are present in this dataset. I chose specifically the series ```CUSR0000SA0``` (urban, seasonally-adjusted, monthly, nationwide, all items) because it is closest to what the BLS prescribes for monthly national figures.
+2. No data was collected during October '25 and part of Nov '25 - no CPI was reported for that October. I use an interpolation of adjacent months as a stand-in.
+
+### Inflation Figures (```inflation.csv```)
+Monthly ratio of dollars to January, 2026 dollars from 2005 to the end of 2025. I calculate these figures from the CPI values described above.
+
+|Name|Description|
+|-|-|
+|month_id|a unique integer for a month in time|
+|year||
+|month|month (1-12)|
+|factor|USD equivalent to Jan, 2026 dollars for that month and year|
+
 ### [Permits: City of Seattle](https://data.seattle.gov/d/76t5-zqzr)
 Data for all available digital permits maintained by the Seattle Department of Construction and Inspections and available through Seattle's Open Data Portal. Updated daily.
 
-Seattle didn't digitize all permits on record when the database launched. 2005 is the first complete year.
+Seattle didn't digitize all permits on record when the database launched. 2005 is the first complete year of collection.
 
-Noteworthy fields:
+#### Relevant fields:
 
 |Name|Description|
 |-|-|
@@ -90,13 +110,20 @@ I prioritized accessibility and chose the community reporting area representatio
 SQL supports two different data types for representing spatial data. *Geometry* treats data as flat, as if occurring on a 2D plane, while *Geography* treats data as existing on a curved ellipsoid. The choice is mostly arbitrary because the projections of my datasets can slot into either type without reprojection and the operations I'm performing on the data are unaffected by assumed curvature.
 
 I opted for Geometry to represent my data database-side simply for an assumed speed advantage.
+
 ### Inflation Data
-I used a file containing yearly, seasonally-adjusted CPI values from the Bureau of Labor Statistics to calculate inflation.
+I wanted to express the costs associated with the permits in current-time dollars, which allows for more meaningful trend analyses.
 
-Since CPI was not calculated for October, 2025, I used the average CPI for 2025 in its place.
+The Bureau of Labor Statistics publishes consumer price index figures (*CPI*)  - weighted sums of various products' prices ("*baskets*") that offer a snapshot of the United States' dollar's value and thereby a citizen's purchasing power. While the BLS publishes time series of many differently-weighted baskets, the one they consider best suited for monthly, general trends in purchasing power falls under the id ```CUSR0000SA0```.
 
-### Permit Data - Processing to Database
-The focus of this project, I wanted to translate this data to a form with greater relation to the tangible reality of the city. The desired form is therefore that each entry refers to one master permit for a completed construction project, the project itself representing a discrete, physical transformation of Seattle, anchored to a single point in time when the reported or estimated changes become meaningful. (Master permits have the added virtue of consistent validity in regards to cost estimation, date, status, and changes in housing units.)
+The script ```bls_data_script.py``` downloads the BLS file containing all series, and extracts the desired series by id, cutting data off outside the study window (2005 to 2025, end-of). Since CPI was not calculated for October, 2025, I used a geometric interpolation between September and November of that year as an imperfect stand-in. It then takes the ratio of each month-year's CPI to the CPI of Jan, 2026.
+
+The transformed data is uploaded to the ```permit_project_db``` database.
+
+In effect, this data maps flattened month-year ids to multipliers. Adjusting estimated costs to today's dollars, for example, is simply a matter of multiplying the factor associated with the month and year of the permit.
+
+### Permit Data
+The focus of this project, I wanted to translate this data to a form with greater relation to the tangible reality of the city. Ideally, each entry refers to one master permit for a completed construction project, the project itself representing a discrete, physical transformation of Seattle, anchored to a single point in time when the reported or estimated changes become meaningful. (Master permits have the added virtue of consistent validity in regards to cost estimation, date, status, and changes in housing units.)
 
 A permit is first timestamped when the application is submitted, with future timestamps for issuance, expiry, and completion. I chose the date the permit was issued to represent the permit as a "point in time", since the earliest construction for a project can legally begin is when the permit is issued. Only when construction begins, do material/labor costs start being paid, are housing units removed or added, etc.
 

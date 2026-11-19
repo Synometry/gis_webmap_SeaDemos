@@ -74,6 +74,7 @@ def fetch_data():
         log(f'Wrote response data to cache @ \"{temp_path}\"')
 
     log('Rearranging CPI data into inflation figures...')
+    # Cleaning data :(
     df = pd.read_csv(file, sep='\t')
     df.columns=df.columns.str.strip()                               # Remove tabs from column names
     df = df.map(lambda x: x.strip() if isinstance(x, str) else x)   # Same for values
