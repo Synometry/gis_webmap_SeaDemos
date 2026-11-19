@@ -119,8 +119,8 @@ def export_as_geojson():
     tract_gdf = permit_db.table_to_geodataframe(tract_table)
     out_tracts_path.write_text(tract_gdf.to_json())
     log(f'Table \"{tract_table.name}\" downloaded to {out_tracts_path}')
-    region_gdf = permit_db.table_to_geodataframe(cra_table)
-    out_cras_path.write_text(region_gdf.to_json())
+    cra_gdf = permit_db.table_to_geodataframe(cra_table)
+    out_cras_path.write_text(cra_gdf.to_json())
     log(f'Table \"{cra_table.name}\" downloaded to {out_cras_path}')
     ...
     
