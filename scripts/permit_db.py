@@ -74,7 +74,10 @@ def geodataframe_to_table(gdf:GeoDataFrame, table_schema:Table) -> None:
     log.log(f'Beginning insertion of GeoDataFrame into table \"{table_schema.name}\"...')
     table_name = table_schema.name
     temp_table_name = table_name + '_temp'
-    gdf['geom_wkb'] = gdf.geometry.make_valid().to_wkb()
+    invalids = ~gdf.geometry.is_valid
+    temp = gdf.loc[invalids, 'geometry'].count()
+    gdf.loc[invalids, 'geometry'] = gdf.loc[invalids, 'geometry'].make_valid()
+    gdf['geom_wkb'] = gdf.geometry.to_wkb()
     log.log(f'Inserting data into temporary table \"{temp_table_name}\"')
     gdf.drop(columns='geometry')\
         .to_sql(temp_table_name, _engine, if_exists='delete_rows', index=False, dtype={'geom_wkb':LargeBinary})
@@ -111,7 +114,10 @@ def table_delete_all_rows(table_schema: Table) -> None:
         
 def spatial_union(table_schema: Table, target_table: Table, groupby: Column | None = None, aggregates: list[tuple[Column, _FunctionGenerator, Column]] | None = None) -> None:
     # Type errors:
-    if not isinstance(table_schema, Table): raise TypeError(f'table_schema: expected {Table} but received {type(table_schema)}')
+    if not isinstance(table_schema, Table):
+        # try this out
+        log.error(f'TypeError: table_schema: expected {Table} but received {type(table_schema)}')
+        raise TypeError(f'table_schema: expected {Table} but received {type(table_schema)}')
     if not isinstance(target_table, Table): raise TypeError(f'table_schema: expected {Table} but received {type(target_table)}')
     if not isinstance(groupby, Column): raise TypeError(f'table_schema: expected {Column} but received {type(Column)}')
     if not (isinstance(aggregates, list) and

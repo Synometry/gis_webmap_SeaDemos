@@ -82,7 +82,7 @@ def fetch_data():
             'outSR': '4326',
             'f': 'geojson'
         }
-        log('Submitting POST request...')
+        log('Sending POST request...')
         response = re.post(arc_url, headers=headers, params=post_json)
         log(f'Response code {response.status_code}')
         if response.status_code != 200:

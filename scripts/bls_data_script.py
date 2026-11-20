@@ -60,7 +60,7 @@ def fetch_data():
             'Connection': 'keep-alive'
         }
 
-        log('Submitting GET request...')
+        log('Sending GET request...')
         response = re.get(bls_url, headers=headers)
         log(f'Response code {response.status_code}')
         if response.status_code != 200:

@@ -3,6 +3,9 @@
 from pathlib import Path
 from datetime import datetime
 import inspect
+import shutil
+
+def out_width(): return shutil.get_terminal_size().columns
 
 config = {
     'write_to_file': 'True',
@@ -33,24 +36,47 @@ def register(name:str | None = None) -> None:
     pf = inspect.getmodule(pfi.frame).__name__
     if name is None: name = module_name_to_fancy(pf)
     _registrants[pf] = name
-    
+
 def log(*messages: str):
+    _output('INFO', *messages)
+
+def error(*messages: str):
+    _output('ERROR', *messages)
+
+def _output(context: str, *messages: str):
     t_str = datetime.now().strftime('%y:%m:%d %I:%M:%S %p')
-    pfi = inspect.stack()[1]
+    pfi = inspect.stack()[2]
     pf = inspect.getmodule(pfi.frame).__name__
     if not pf in _registrants.keys():
         name = module_name_to_fancy(pf)
     else:
         name = _registrants[pf]
-    msg = ' '.join([str(m) for m in messages])
-    log_prefix = f'[{t_str}] [{name}]'
-    for line in msg.splitlines():
-        log_line = log_prefix + ' ' + line
-        print(log_line)
-        if write_to_file: write(log_line)
+    log_prefix = f'[{t_str}] [{name}] {context}'
     
+    # tabulation for nested list of message columns (not rows)
+    if all([isinstance(m, list) for m in messages]):
+        messages = [
+            [str(item) for item in col] for col in messages
+        ]
+        maxima = [
+            max([len(i) for i in col]) for col in messages
+        ]
+        for i in range(len(messages[0])):
+            line = ''.join([col[i] + ' ' * (mx + 1 - len(col[i])) for col, mx in zip(messages, maxima)])
+            _handle_formatted(log_prefix, line)
+    else:
+        msg = ' '.join([str(m) for m in messages])
+        for line in msg.splitlines():
+            _handle_formatted(log_prefix, line)
+
+def _handle_formatted(prefix: str, message: str):
+    log_line = prefix + ': ' + message
+    print(log_line[:out_width()])
+    if write_to_file: write(log_line)
+
 if __name__ == '__main__':
     # test
     register()
     print(_registrants)
     log('Hi', 'and', 'hello', 'world!')
+    log(['one', 'two', 'three', 'seventeen', 'two', 'three'], ['one','one','one','one','one','one'])

@@ -87,9 +87,9 @@ Seattle didn't digitize all permits on record when the database launched. 2005 i
 |StatusCurrent|The most recent step in the permitting process|
 |ParentPermitNum|Overarching permit under which this one lies|
 
-1. PermitNum is implied to be unique per entry. I found that this was(n't)[VERIFY] the case.
-2. Despite there being a StatusCurrent value for closed permits, many permits were marked "Complete" despite the Description beginning with the phrase "marked closed for incomplete" [VERIFYANDHOWMANY?]
-3. Housing "Units" are intended to refer to entire structures, yet many permit applicants clearly treat it as "apartment units", uncorrected by the SDCI.
+1. PermitNum is implied to be unique per entry. I found that this holds, at minimum with the filtered dataset.
+2. Despite there being a StatusCurrent value for closed permits, many permits were marked "Complete" despite the Description beginning with the phrase "closed as incomplete".
+3. Housing "Units" are intended to refer to entire structures, yet many permit applicants clearly treat it as "apartment units". There are many entries left uncorrected by the SDCI.
 
 ## {Methods/Methodology (name/explain each step)}
 ### Broad Script Design
@@ -129,7 +129,7 @@ A permit is first timestamped when the application is submitted, with future tim
 
 I ignored projects were marked as complete, but contained "closed as incomplete" within the description.
 
-The script ```sodp_data_script``` accesses Seattle permit data using the SODA V3 API. It submits POST request containing a query that restricts captured permits to the following criteria:
+The script ```sodp_data_script.py``` accesses Seattle permit data using the SODA V3 API. It submits POST request containing a query that restricts captured permits to the following criteria:
 - PermitClassMapped is "Residential"
 - PermitTypeMapped is "Building"
 - IssuedDate is between 2005 and the end of 2025
