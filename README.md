@@ -137,8 +137,11 @@ The script ```sodp_data_script.py``` accesses Seattle permit data using the SODA
 - Description did not contain the phrase "closed as incomplete"
 - Both HousingUnitsAdded and HousingUnitsRemoved were neither blank nor non-zero
 - ParentPermitNum was blank (ensuring each entry is a master permit; avoids double-counting)
+- Has location data in some form (coordinates or address)
 
 The data is requested in csv form (requesting geojson provides no geometry).
+
+Seven rows are missing location data but provide addresses, which the SDCI warns of. I manually pair these with lat/long coordinate pairs from a simple Google Maps search.
 
 #### Aside:
 > Seattle's Open Data Portal uses the Socrata Querying Language to interpret queries (documented [here](https://dev.socrata.com/docs/functions/#,)). I found the list of functions to be non-exhaustive; examining the urls submitted by the platform's web UI provided additional functions available for my use, notably the two caseless functions ```caseless_starts_with``` and ```caseless_one_of```.

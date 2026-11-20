@@ -15,6 +15,17 @@ register('SODP Data Script')
 
 ## Data Definitions
 
+# (manual data repair)
+_address_lookup = {
+    '3609 INTERLAKE AVE N': (47.651072515140655, -122.3416680730757),
+    '2126 N 112TH ST':      (47.709918179275185, -122.33269777963629),
+    '3646 36TH AVE S':      (47.57024754412952,  -122.28791933807115),
+    '2806 14TH AVE W':      (47.64506362667159,  -122.37466385697675),
+    '1226 5TH AVE N':       (47.63064604782791,  -122.34718422083851),
+    '1531 18TH AVE S':      (47.589113513217605, -122.30976484203883),
+    '4256 S WILLOW ST':     (47.54086776931711,  -122.2785475288475)
+}
+
 log('Building table schema')
 
 t_name_permits = 'seattle_permits'
@@ -69,15 +80,16 @@ def fetch_data():
         }
         # SoQL query template
         query = '''SELECT {selectee} WHERE \
-            caseless_one_of(permitclassmapped, "residential") AND \
-            caseless_one_of(permittypemapped, "building") AND \
-            issueddate BETWEEN "2005-01-01T00:00:00" and "2025-12-31T23:59:59" AND \
-            caseless_one_of(statuscurrent, "approved to occupy", "completed", "inspections completed", "issued", "phase issued") AND \
-            NOT caseless_starts_with(description, "closed as incomplete") AND \
-            (housingunitsremoved IS NOT NULL OR housingunitsadded IS NOT NULL) AND \
-            NOT (housingunitsremoved == 0 AND housingunitsadded == 0) AND \
-            parentpermitnum IS NULL \
-            LIMIT {limit}'''
+caseless_one_of(permitclassmapped, "residential") AND \
+caseless_one_of(permittypemapped, "building") AND \
+issueddate BETWEEN "2005-01-01T00:00:00" and "2025-12-31T23:59:59" AND \
+caseless_one_of(statuscurrent, "approved to occupy", "completed", "inspections completed", "issued", "phase issued") AND \
+NOT caseless_starts_with(description, "closed as incomplete") AND \
+(housingunitsremoved IS NOT NULL OR housingunitsadded IS NOT NULL) AND \
+NOT (housingunitsremoved == 0 AND housingunitsadded == 0) AND \
+parentpermitnum IS NULL \
+AND ((latitude IS NOT NULL AND longitude IS NOT NULL) OR originaladdress1 IS NOT NULL) \
+LIMIT {limit}'''
         # Getting row count for limit
         parameters = {
             '$query':query.format(selectee='COUNT(*)', limit='1')
@@ -114,11 +126,20 @@ def fetch_data():
 
 def upload_to_db():
     log('Moving permit data to database')
+    log('Preparing data for upload...')
     df = pd.read_csv(raw_data_path)
+    na_coord_mask = df['latitude'].isna()
+    invalid_coord_count = df[na_coord_mask].count()
+    if invalid_coord_count > 0:
+        log(f'Found {invalid_coord_count} permit entries missing coordinates - repairing...')
+        df.loc[na_coord_mask, ['latitude', 'longitude']] = df.loc[na_coord_mask, 'originaladdress1'].apply(func=lambda address: pd.Series(_address_lookup.get(address, (None, None)))).values
     gseries = df[['latitude', 'longitude']].apply(lambda row: Point(row['latitude'], row['longitude']), axis=1)
     invalid = df[~gpd.GeoSeries(gseries).is_valid]
-    # Those are invalid points. Have 'nan, nan' as coords. Find out why.
-    return
+    if invalid.count() > 0:
+        log(f'Repaired {invalid_coord_count - invalid.count()} - remaining permit entries:')
+        log(invalid)
+        return
+    elif invalid_coord_count > 0: log('All permit entries with missing coordinates successfully repaired')
     gdf = gpd.GeoDataFrame(df.drop(columns=['latitude', 'longitude']), geometry=gseries)
     log(f'Entries in data prior to upload: {len(gdf)}', '\nPreview:\n', gdf.head(5))
     log('Uploading to database...')
@@ -146,7 +167,7 @@ def data_peeker():
     ...
     
 if __name__ == '__main__':
-    reset_tables()
-    fetch_data()
+    # reset_tables()
+    # fetch_data()
     # data_peeker()
     upload_to_db()
