@@ -127,18 +127,22 @@ The focus of this project, I wanted to translate this data to a form with greate
 
 A permit is first timestamped when the application is submitted, with future timestamps for issuance, expiry, and completion. I chose the date the permit was issued to represent the permit as a "point in time", since the earliest construction for a project can legally begin is when the permit is issued. Only when construction begins, do material/labor costs start being paid, are housing units removed or added, etc.
 
-Some projects were marked as complete, but contained "marked closed as incomplete" [VERIFY]
+I ignored projects were marked as complete, but contained "closed as incomplete" within the description.
 
-I accessed Seattle permit data on [DATE], using the online querying tool to immediately select only the permits matching the following criteria:
-- PermitClassMapped = "Residential"
-- PermitTypeMapped = "Building"
-- IssuedDate between 2005 and the end of 2025
-- CurrentStatus does not indicate the permit wasn't issued, or closed prior to completion [POPULATE]
-- Description did not contain the phrase "[POPULATE]"
-- HousingUnitsAdded and HousingUnitsRemoved were neither blank nor non-zero
-- ParentPermitNum was blank (Avoids double-counting)
+The script ```sodp_data_script``` accesses Seattle permit data using the SODA V3 API. It submits POST request containing a query that restricts captured permits to the following criteria:
+- PermitClassMapped is "Residential"
+- PermitTypeMapped is "Building"
+- IssuedDate is between 2005 and the end of 2025
+- CurrentStatus does not indicate the permit wasn't issued, or closed prior to completion - being permissible, any of "approved to occupy", "completed", "inspections completed", "issued", and "phase issued".
+- Description did not contain the phrase "closed as incomplete"
+- Both HousingUnitsAdded and HousingUnitsRemoved were neither blank nor non-zero
+- ParentPermitNum was blank (ensuring each entry is a master permit; avoids double-counting)
 
-Requested in csv form (requesting geojson provides no geometry), offers faster platform to load into database
+The data is requested in csv form (requesting geojson provides no geometry).
+
+#### Aside:
+> Seattle's Open Data Portal uses the Socrata Querying Language to interpret queries (documented [here](https://dev.socrata.com/docs/functions/#,)). I found the list of functions to be non-exhaustive; examining the urls submitted by the platform's web UI provided additional functions available for my use, notably the two caseless functions ```caseless_starts_with``` and ```caseless_one_of```.
+
 convert location1 into T-SQL native type?
 
 Created field "Status" holding my own status categorization for each permit:

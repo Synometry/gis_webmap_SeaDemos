@@ -13,7 +13,7 @@ import geopandas as gpd
 
 raw_data_path = Path('./cache/permitQuery.csv')
 
-# End-point for Bureau of Labor Statistics file I want
+# End-point for SODA-V3
 soda_url = 'https://data.seattle.gov/api/v3/views/76t5-zqzr/query.csv'
 
 def fetch_data():
