@@ -1,9 +1,10 @@
 # permit_db.py
 # Holden Bailey, 2026
 # 
-# A small interface that allows data scripts controlled access to the project database.
+# An interface that allows data scripts controlled access to the project database.
 
 import datetime
+import platform
 from geopandas import GeoDataFrame
 import pandas as pd
 from pandas import DataFrame
@@ -17,6 +18,8 @@ import geoalchemy2.shape as shp
 import log
 log.register('Permit DB')
 
+metadata = MetaData()
+
 # User-defined function block taken from example in documentation:
 # https://docs.sqlalchemy.org/en/21/core/compiler.html
 class GeomUnionAggregate(FunctionElement):
@@ -27,26 +30,50 @@ class GeomUnionAggregate(FunctionElement):
 def compile(element, compiler, **kw):
     return 'geometry::UnionAggregate(%s)' % compiler.process(element.clauses, **kw)
 
-log.log('Building database connection engine...')
+# system, platform categories
+sys_cat = platform.system()
+plat_cat = f'{sys_cat} {platform.release()}'
+log.log(f'Building database connection engine for [{plat_cat} {platform.version()}]')
 
-metadata = MetaData()
+url_map = {
+    'Windows 10': lambda: URL.create(
+            'mssql+mssqlpython',
+            host='localhost\\SQLEXPRESS',
+            database='project_permit_db',
+            query={
+                'TrustServerCertificate':'yes',
+                'Trusted_Connection':'yes'
+            }
+        ),
+    # Adjust
+    'Linux': lambda: URL.create(
+            'mssql+mssqlpython',
+            host='localhost\\SQLEXPRESS',
+            database='project_permit_db',
+            query={
+                'TrustServerCertificate':'yes',
+                'Trusted_Connection':'yes'
+            }
+        ),
+}
 
-_connect_url = URL.create(
-    'mssql+mssqlpython',
-    host='localhost\\SQLEXPRESS',
-    database='project_permit_db',
-    query={
-        'TrustServerCertificate':'yes',
-        'Trusted_Connection':'yes'
-    }
-)
+if plat_cat in url_map.keys(): _connect_url = url_map[plat_cat]()
+else:
+    log.log(f'Couldn\'t find URL creator for {plat_cat} - trying generic system \"{sys_cat}\"')
+    for k, v in url_map.items():
+        if sys_cat in k:
+            _connect_url = v()
 
 _engine = sqlalchemy.create_engine(_connect_url)
 
 log.log('Engine created - testing engine...')
 
-with _engine.begin() as connection:
-    result = connection.execute(text('SELECT 1'))
+try:
+    with _engine.begin() as connection:
+        connection.execute(text('SELECT 1'))
+except Exception as e:
+    log.error(f'Connection failed: {e}')
+    raise
 
 log.log('Engine connection test passed')
 
@@ -80,7 +107,6 @@ def geodataframe_to_table(gdf:GeoDataFrame, table_schema:Table) -> None:
     table_name = table_schema.name
     temp_table_name = table_name + '_temp'
     invalids = ~gdf.geometry.is_valid
-    temp = gdf.loc[invalids, 'geometry'].count()
     gdf.loc[invalids, 'geometry'] = gdf.loc[invalids, 'geometry'].make_valid()
     gdf['geom_wkb'] = gdf.geometry.to_wkb()
     log.log(f'Inserting data into temporary table \"{temp_table_name}\"')
