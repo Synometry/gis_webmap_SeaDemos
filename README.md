@@ -3,8 +3,10 @@
 
 Tool-driven project: Aim to use MS SQL, SQLAlchemy, and the ArcGIS suite in the production of an interactible webmap to demonstrate competence.
 
-Python module requirements are handily listed in ```requirements.txt```. Install them from the repo directory with
+Python module requirements are handily listed in ```requirements.txt```. From the repo's root directory, set up the virtual environment with:
 ```shell
+python -m venv .venv
+# (Varies by system) Activate the created 'activate' binary
 pip install -r requirements.txt
 ```
 
