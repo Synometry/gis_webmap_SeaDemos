@@ -4,18 +4,12 @@ from pathlib import Path
 from datetime import datetime
 import inspect
 import shutil
+import config
 
 def out_width(): return shutil.get_terminal_size().columns
 
-config = {
-    'write_to_file': 'True',
-    'log_dir':'logs/'
-}
-
-write_to_file = config['write_to_file'].lower() == 'true'
-
-if write_to_file:
-    logFile = Path(config['log_dir'], 'log.txt')
+if config.write_to_file():
+    logFile = Path('./logs', 'log.txt')
     oldFile = Path(f'{logFile}'.replace('.txt', '.old.txt'))
     if logFile.exists():
         if oldFile.exists(): oldFile.unlink()
@@ -72,7 +66,7 @@ def _output(context: str, *messages: str):
 def _handle_formatted(prefix: str, message: str):
     log_line = prefix + ': ' + message
     print(log_line[:out_width()])
-    if write_to_file: write(log_line)
+    if config.write_to_file(): write(log_line)
 
 if __name__ == '__main__':
     # test

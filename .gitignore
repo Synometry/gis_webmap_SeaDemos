@@ -2,4 +2,5 @@
 /logs/*
 /.venv/*
 __pycache__/
+config.txt
 !.gitkeep
