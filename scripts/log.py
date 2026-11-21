@@ -3,7 +3,9 @@
 from pathlib import Path
 from datetime import datetime
 import inspect
+from sys import _getframe
 import shutil
+from typing import Any
 
 _write_to_file = True
 def set_write_to_file(val: bool) -> None:
@@ -26,25 +28,31 @@ def write(*s: str) -> None:
 
 _registrants:dict = {}
 
+def _get_calling_module() -> str:
+    i = 1
+    while(True):
+        module_name = _getframe(i).f_globals['__name__']
+        if module_name != __name__: break
+        i += 1
+    return module_name
+
 def module_name_to_fancy(mod: str) -> str:
     return mod.replace('_', ' ').title().strip()
 
 def register(name:str | None = None) -> None:
-    pfi = inspect.stack()[1]
-    pf = inspect.getmodule(pfi.frame).__name__
+    pf = _get_calling_module()
     if name is None: name = module_name_to_fancy(pf)
     _registrants[pf] = name
 
-def log(*messages: str):
+def log(*messages: Any | list[Any]):
     _output('INFO', *messages)
 
-def error(*messages: str):
+def error(*messages: Any | list[Any]):
     _output('ERROR', *messages)
 
-def _output(context: str, *messages: str):
+def _output(context: str, *messages: Any | list[Any]):
     t_str = datetime.now().strftime('%y:%m:%d %I:%M:%S %p')
-    pfi = inspect.stack()[2]
-    pf = inspect.getmodule(pfi.frame).__name__
+    pf = _get_calling_module()
     if not pf in _registrants.keys():
         name = module_name_to_fancy(pf)
     else:
@@ -53,9 +61,7 @@ def _output(context: str, *messages: str):
     
     # tabulation for nested list of message columns (not rows)
     if all([isinstance(m, list) for m in messages]):
-        messages = [
-            [str(item) for item in col] for col in messages
-        ]
+        messages = tuple([str(item) for item in col] for col in messages)
         maxima = [
             max([len(i) for i in col]) for col in messages
         ]

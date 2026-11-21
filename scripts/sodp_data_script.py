@@ -133,8 +133,8 @@ def upload_to_db():
     if invalid_coord_count > 0:
         log(f'Found {invalid_coord_count} permit entries missing coordinates - repairing...')
         df.loc[na_coord_mask, ['latitude', 'longitude']] = df.loc[na_coord_mask, 'originaladdress1'].apply(func=lambda address: pd.Series(_address_lookup.get(address, (None, None)))).values
-    gseries = df[['latitude', 'longitude']].apply(lambda row: Point(row['latitude'], row['longitude']), axis=1)
-    invalid = df[~gpd.GeoSeries(gseries).is_valid]
+    pointList = [Point(lat, long) for lat, long in zip(df['latitude'], df['longitude'])]
+    invalid = df[~gpd.GeoSeries(pointList).is_valid]
     invalid_shape_count = len(invalid)
     if invalid_shape_count > 0:
         log(f'Repaired {invalid_coord_count - invalid_shape_count} - remaining invalid permit entries:')
@@ -142,7 +142,7 @@ def upload_to_db():
         return
     elif invalid_coord_count > 0: log('All permit entries with missing coordinates successfully repaired')
     return
-    gdf = gpd.GeoDataFrame(df.drop(columns=['latitude', 'longitude']), geometry=gseries)
+    gdf = gpd.GeoDataFrame(df.drop(columns=['latitude', 'longitude']), geometry=pointList)
     log(f'Entries in data prior to upload: {len(gdf)}', '\nPreview:\n', gdf.head(5))
     log('Uploading to database...')
     permit_db.geodataframe_to_table(gdf, permit_table)
@@ -160,7 +160,7 @@ def data_peeker():
     for (c, t) in zip(df.columns, df.dtypes):
         namelist.append(c)
         typelist.append(t)
-        uniquelist.append(df[c].is_unique)
+        uniquelist.append(str(df[c].is_unique))
         if isinstance(t, pd.StringDtype):
             maxlist.append(np.max(df[c].str.len()))
         else:

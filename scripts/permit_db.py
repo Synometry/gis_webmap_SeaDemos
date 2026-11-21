@@ -6,7 +6,7 @@
 import datetime
 import platform
 import getpass
-from geopandas import GeoDataFrame
+from geopandas import GeoDataFrame, GeoSeries
 import pandas as pd
 from pandas import DataFrame
 import sqlalchemy
@@ -91,7 +91,7 @@ def create_table(table_schema: Table):
     else:
         log.log(f'Table creation unsuccessful!')
 
-def table_to_dataframe(table_schema: Table, index_col: str | None = None) -> DataFrame:
+def table_to_dataframe(table_schema: Table, index_col: str | None = None) -> DataFrame | None:
     log.log(f'Fetching table \"{table_schema.name}\" as {DataFrame}')
     if not table_exists(table_schema):
         log.log(f'Fetching failed! No such table named \"{table_schema.name}\"')
@@ -129,9 +129,9 @@ def table_to_geodataframe(table_schema: Table, index_col: str | None = None) -> 
     log.log(f'Fetching table \"{table_schema.name}\" as {GeoDataFrame}')
     if not table_exists(table_schema):
         log.log(f'Fetching failed! No such table named \"{table_schema.name}\"')
-        return None
+        raise ValueError(f'No such table named \"{table_schema.name}\" in database!')
     df = pd.read_sql_table(table_schema.name, _engine, index_col)
-    gseries = df['geometry'].apply(shp.to_shape)
+    gseries = GeoSeries([shp.to_shape(geom) for geom in df['geometry']], df.index)
     gdf = GeoDataFrame(df, geometry=gseries)
     return gdf
 
