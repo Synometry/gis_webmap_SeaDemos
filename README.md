@@ -3,12 +3,7 @@
 
 Tool-driven project: Aim to use MS SQL, SQLAlchemy, and the ArcGIS suite in the production of an interactible webmap to demonstrate competence.
 
-Python module requirements are handily listed in ```requirements.txt```. From the repo's root directory, set up the virtual environment with:
-```shell
-python -m venv .venv
-# (Varies by system) Run the created 'activate' binary
-pip install -r requirements.txt
-```
+
 
 {live deployment}
 
@@ -19,13 +14,21 @@ put the project into english
 
 address:
 - why was this necessary? (problem, study question, etc.) (this content can discuss history)
+- High-level outline of project
 - summarize methods: what is the logic - not the history - that carried me from the study question or problem to my results
 - what were the results? Is this outcome desirable?
 
-## Libraries/Modules (if applicable)
+## Libraries/Modules (if applicable) (Exchange with or fold-into Setup section)
 List modules and libraries used, for purposes of reproduction/review.
 
 Provide links for unusual libraries.
+
+Python module requirements are handily listed in ```requirements.txt```. From the repo's root directory, set up the virtual environment with:
+```shell
+python -m venv .venv
+# (Varies by system) Run the created 'activate' binary
+pip install -r requirements.txt
+```
 
 ## Data
 ### [Seattle Census Tracts - City of Seattle](https://data-seattlecitygis.opendata.arcgis.com/datasets/SeattleCityGIS::2020-census-tracts-seattle/about)
