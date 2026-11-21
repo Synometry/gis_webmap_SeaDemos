@@ -12,11 +12,9 @@ log.register()
 _config_path = Path('./scripts/config.txt')
 _config_path.touch()
 
-# Load config
-
 # (doubles as defaults)
 _idict = {
-    'write_to_file': 'true',
+    'write_to_file': 'true'
 }
 with _config_path.open('rt') as conf_file:
     for line in conf_file.readlines():
@@ -24,10 +22,14 @@ with _config_path.open('rt') as conf_file:
         if key in _idict.keys(): _idict[key] = val
 log.log(f'Loaded configuration from \"{_config_path}\"')
 
+# Configuration Settings
 def write_to_file() -> bool: return str.lower(_idict['write_to_file']) == 'true'
+def set_write_to_file(val: bool) -> None:
+    _idict['write_to_file'] = str(val)
+    log.set_write_to_file(val)
 
 # *unrelated to public function
-def _write_to_file():
+def _write_to_file() -> None:
     log.log('Writing config to disk...')
     with _config_path.open('wt') as conf_file:
         conf_file.write('\n'.join([f'{k}: {v}' for k, v in _idict.items()]))
