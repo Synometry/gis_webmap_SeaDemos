@@ -18,7 +18,7 @@ if write_to_file:
     logFile = Path(config['log_dir'], 'log.txt')
     oldFile = Path(f'{logFile}'.replace('.txt', '.old.txt'))
     if logFile.exists():
-        oldFile.unlink()
+        if oldFile.exists(): oldFile.unlink()
         logFile.rename(oldFile)
     else: logFile.touch()
 

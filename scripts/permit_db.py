@@ -43,7 +43,12 @@ _connect_url = URL.create(
 
 _engine = sqlalchemy.create_engine(_connect_url)
 
-log.log('Engine created')
+log.log('Engine created - testing engine...')
+
+with _engine.begin() as connection:
+    result = connection.execute(text('SELECT 1'))
+
+log.log('Engine connection test passed')
 
 def table_exists(table: Table) -> bool: return inspect(_engine).has_table(table.name)
 
