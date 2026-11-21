@@ -5,6 +5,7 @@
 
 import datetime
 import platform
+import getpass
 from geopandas import GeoDataFrame
 import pandas as pd
 from pandas import DataFrame
@@ -45,18 +46,18 @@ url_map = {
                 'Trusted_Connection':'yes'
             }
         ),
-    # Adjust
-    'Linux': lambda: URL.create(
+    'Linux 7.0.0-31-generic': lambda: URL.create(
             'mssql+mssqlpython',
-            host='localhost\\SQLEXPRESS',
+            host='localhost',
+            username='sa',
+            password=getpass.getpass('Password (not logged): '),
             database='project_permit_db',
             query={
                 'TrustServerCertificate':'yes',
-                'Trusted_Connection':'yes'
+                'Authentication':'SqlPassword'
             }
         ),
 }
-
 if plat_cat in url_map.keys(): _connect_url = url_map[plat_cat]()
 else:
     log.log(f'Couldn\'t find URL creator for {plat_cat} - trying generic system \"{sys_cat}\"')
