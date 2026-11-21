@@ -3,6 +3,11 @@
 
 Tool-driven project: Aim to use MS SQL, SQLAlchemy, and the ArcGIS suite in the production of an interactible webmap to demonstrate competence.
 
+Python module requirements are handily listed in ```requirements.txt```. Install them from the repo directory with
+```shell
+pip install -r requirements.txt
+```
+
 {live deployment}
 
 {links to latest downloadable release}
