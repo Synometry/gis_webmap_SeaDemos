@@ -7,7 +7,7 @@ import requests as re
 import pandas as pd
 from sqlalchemy import Table, Column, Integer, Float
 from common import base_from_url
-from log import register, log
+from log import error, register, log
 import permit_db
 
 register('BLS Data Script')
@@ -80,7 +80,7 @@ def fetch_data():
     df = df.map(lambda x: x.strip() if isinstance(x, str) else x)   # Same for values
     df['value'] = pd.to_numeric(df['value'], 'coerce')
     log(f'Preview of cached \'{file_name}\':\n', df.head())
-    df['period'] = df['period'].map(lambda x: int(x[1:3]))          # Convert period string to month number
+    df['period'] = df['period'].map(lambda x: int(x[1:3]) if isinstance(x, str) else 'NAN') # Convert period string to month number
 
     ## Data Processing
 
@@ -94,7 +94,7 @@ def fetch_data():
     O25 = np.sqrt(S25 * N25)
     df.loc[(df['year']==2025) & (df['period']==10), 'value'] = O25
     # calculate ratio of each period's CPI to Jan, 2026 CPI
-    base = df.loc[(df['year'] == 2026) & (df['period'] == 1),'value'].values[0]
+    base = df.loc[(df['year'] == 2026) & (df['period'] == 1),'value'].iloc[0]
     df['factor'] = (base / df['value'])
     # restrict data to study period
     df = df[df['year'].between(2005,2025)]
@@ -113,7 +113,8 @@ def upload_to_db():
     permit_db.dataframe_to_table(df, t_name)
     log('Verifying data in database...')
     df = permit_db.table_to_dataframe(inflation_table)
-    log(f'Entries in database data: {len(df)}', '\nPreview:\n', df.head(5))
+    if df is None: error('Database is None!')
+    else: log(f'Entries in database data: {len(df)}', '\nPreview:\n', df.head(5))
 
 if __name__ == '__main__':
     fetch_data()
