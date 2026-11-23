@@ -11,7 +11,7 @@ from geopandas import GeoDataFrame, GeoSeries
 import pandas as pd
 from pandas import DataFrame
 import sqlalchemy
-from sqlalchemy import Column, LargeBinary, MetaData, Table, func, insert, select, text, inspect
+from sqlalchemy import Column, CursorResult, Date, DateTime, Executable, LargeBinary, MetaData, Table, func, insert, select, text, inspect
 from sqlalchemy.sql.functions import _FunctionGenerator
 from sqlalchemy.sql.expression import Select, FunctionElement
 from sqlalchemy.ext.compiler import compiles
@@ -114,9 +114,9 @@ def geodataframe_to_table(gdf:GeoDataFrame, table_schema:Table) -> None:
     log.log(f'Inserting data into temporary table \"{temp_table_name}\"')
     gdf.drop(columns='geometry')\
         .to_sql(temp_table_name, _engine, if_exists='delete_rows', index=False, dtype={'geom_wkb':LargeBinary})
-    log.log(f'Converting geometry and moving data into table \"{temp_table_name}\"')
     col_names = ', '.join([f'{c}' for c in gdf.columns if not c in ['geometry', 'geom_wkb']])
     table_delete_all_rows(table_schema)
+    log.log(f'Converting geometry and moving data into table \"{table_schema}\"')
     with _engine.begin() as conn:
         conn.execute(text(\
             f'INSERT INTO {table_name} ({col_names}, [geometry]) '
@@ -158,6 +158,19 @@ def table_delete_all_rows(table_schema: Table) -> None:
 # ╭────────────╮
 # │ PROCESSING │
 # ╰────────────╯
+
+def execute(statement: Executable) -> DataFrame | None:
+    try:
+        with _engine.begin() as conn:
+            res = conn.execute(statement)
+            if res.returns_rows:
+                df = pd.DataFrame(res)
+            else: df = None
+        return df
+    except Exception as e:
+        log.error(e)
+        raise
+    ...
 
 def spatial_union(table_schema: Table, target_table: Table, groupby: Column | None = None, aggregates: list[tuple[Column, _FunctionGenerator, Column]] | None = None) -> None:
     # Type errors:
@@ -209,6 +222,22 @@ def spatial_union(table_schema: Table, target_table: Table, groupby: Column | No
         log.error(f'Spatial union failed: {e}')
         raise
     log.log('Spatial union complete')
+    
+def month_id(table_schema: Table, date_col: Column) -> None:
+    if not isinstance(table_schema, Table):
+        e = TypeError(f'table_schema: expected {Table} but received {type(table_schema)}')
+        log.error(e)
+        raise e
+    if not isinstance(date_col, Column):
+        e = TypeError(f'date_col: expected {Column} but received {type(date_col)}')
+        log.error(e)
+        raise e
+    if not isinstance(date_col.type, (Date, DateTime)):
+        e = ValueError(f'date_col: expected a column with date-like type, but received a column with type {type(date_col.type)}')
+        log.error(e)
+        raise e
+    with _engine.begin() as conn:
+        sel = select(func.concat(func.year()))
 
 # ╭─────────╮
 # │ EXPORTS │

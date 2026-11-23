@@ -101,6 +101,8 @@ Seattle didn't digitize all permits on record when the database launched. 2005 i
 2. Despite there being a StatusCurrent value for closed permits, many permits were marked "Complete" despite the Description beginning with the phrase "closed as incomplete".
 3. Housing "Units" are intended to refer to entire structures, yet many permit applicants clearly treat it as "apartment units". There are many entries left uncorrected by the SDCI.
 
+The remaining fields are included as a measure to increase the data available for users to browse.
+
 ## {Methods/Methodology (name/explain each step)}
 ### Broad Script Design
 #### SQLAlchemy: Core vs. ORM Model
@@ -158,15 +160,20 @@ The data is requested in csv form (requesting geojson provides no geometry).
 Seven rows are missing location data but provide addresses, which the SDCI warns of. I manually pair these with lat/long coordinate pairs from a simple Google Maps search.
 
 #### Aside:
-> Seattle's Open Data Portal uses the Socrata Querying Language to interpret queries (documented [here](https://dev.socrata.com/docs/functions/#,)). I found the list of functions to be non-exhaustive; examining the urls submitted by the platform's web UI provided additional functions available for my use, notably the two caseless functions ```caseless_starts_with``` and ```caseless_one_of```.
+> Seattle's Open Data Portal uses the Socrata Querying Language to interpret queries (documented [here](https://dev.socrata.com/docs/functions/#,)). I found the list of functions to be non-exhaustive; examining the urls submitted by the platform's web UI revealed additional functions available for my use, notably the two caseless functions ```caseless_starts_with``` and ```caseless_one_of```.
 
-convert location1 into T-SQL native type?
+I added the field "AdjEstCost" for the estimated costs, adjusted for inflation, expressed in Jan, 2026 dollars. The factor of inflation drawn from BLS historical CPI data.
+```SQL
+SELECT
+inflation_factors.factor * seattle_permits.estprojectcost as adj_cost
+FROM seattle_permits
+LEFT JOIN inflation_factors	ON CONCAT(YEAR(applieddate), FORMAT(MONTH(applieddate), '00')) = inflation_factors.month_id
+```
 
 Created field "Status" holding my own status categorization for each permit:
 - Permits with a blank completion date and their date of expiry had lapsed received "Expired - Open"
 - Otherwise, the permit's status was assigned "Active" unless the original StatusCurrent field was explicitly "Completed"
 
-I added the field "AdjEstCost" for the estimated costs, adjusted for inflation, expressed in Jan, 2026 dollars. The factor of inflation drawn from BLS historical CPI data.
 
 Address removing "expired" or "marked incomplete" permits, which may have had some work completed anyway.
 

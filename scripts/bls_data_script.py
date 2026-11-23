@@ -14,7 +14,7 @@ register('BLS Data Script')
 
 ## Data Definitions
 
-log('Building & submitting table schema')
+log('Building table schema')
 
 t_name = 'inflation_factors'
 

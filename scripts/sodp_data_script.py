@@ -42,6 +42,7 @@ permit_table = Table(
     Column('housingunitsremoved',   SmallInteger),
     Column('housingunitsadded',     SmallInteger),
     Column('estprojectcost',        Float),
+    Column('adjestcost',            Float), # Derived from other table
     Column('applieddate',           Date),
     Column('issueddate',            Date),
     Column('expiresdate',           Date),
@@ -168,7 +169,7 @@ def data_peeker():
     ...
     
 if __name__ == '__main__':
-    # reset_tables()
+    reset_tables()
     # fetch_data()
     # data_peeker()
     upload_to_db()
