@@ -3,6 +3,8 @@
 #
 # Calls each dataset-specific script in sequence
 
+import permit_db
+import config
 import tract_data_script
 import sodp_data_script
 import bls_data_script
@@ -12,6 +14,8 @@ def main():
     tract_data_script.fetch_data()
     tract_data_script.upload_to_db()
     tract_data_script.dissolve_tracts()
+    permit_db.download_as_geojson(tract_data_script.tract_table, config.dir_external_data()/'seattle_tracts.geojson')
+    permit_db.download_as_geojson(tract_data_script.cra_table, config.dir_external_data()/'seattle_cras.geojson')
     bls_data_script.reset_tables()
     bls_data_script.fetch_data()
     bls_data_script.upload_to_db()

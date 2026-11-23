@@ -4,6 +4,7 @@
 # An interface that allows data scripts controlled access to the project database.
 
 import datetime
+from pathlib import Path
 import platform
 import getpass
 from geopandas import GeoDataFrame, GeoSeries
@@ -153,7 +154,11 @@ def table_delete_all_rows(table_schema: Table) -> None:
     except Exception as e:
         log.error(f'Delete all rows failed: {e}')
         raise
-        
+
+# ╭────────────╮
+# │ PROCESSING │
+# ╰────────────╯
+
 def spatial_union(table_schema: Table, target_table: Table, groupby: Column | None = None, aggregates: list[tuple[Column, _FunctionGenerator, Column]] | None = None) -> None:
     # Type errors:
     if not isinstance(table_schema, Table):
@@ -203,4 +208,15 @@ def spatial_union(table_schema: Table, target_table: Table, groupby: Column | No
     except Exception as e:
         log.error(f'Spatial union failed: {e}')
         raise
+    log.log('Spatial union complete')
+
+# ╭─────────╮
+# │ EXPORTS │
+# ╰─────────╯
+
+def download_as_geojson(table_schema: Table, target_path: Path) -> None:
+    log.log(f'Downloading from table \"{table_schema}\" to \"{target_path}\"')
+    gdf = table_to_geodataframe(table_schema)
+    target_path.write_text(gdf.to_json())
+    log.log(f'Data written to \"{target_path}\"')
     ...

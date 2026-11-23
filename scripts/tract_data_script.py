@@ -114,16 +114,6 @@ def dissolve_tracts():
     ])
     permit_db.spatial_union(tract_table, cra_table, tract_table.c.gen_alias, agg)
     
-def export_as_geojson():
-    log(f'Downloading data to \"{ext_data_dir}\"')
-    tract_gdf = permit_db.table_to_geodataframe(tract_table)
-    out_tracts_path.write_text(tract_gdf.to_json())
-    log(f'Table \"{tract_table.name}\" downloaded to {out_tracts_path}')
-    cra_gdf = permit_db.table_to_geodataframe(cra_table)
-    out_cras_path.write_text(cra_gdf.to_json())
-    log(f'Table \"{cra_table.name}\" downloaded to {out_cras_path}')
-    ...
-    
 def eval_acre_figs():
     log('Evaluating land measurement errors...')
     gdf = gpd.read_file(raw_data_path)
@@ -139,5 +129,4 @@ if __name__ == '__main__':
     # eval_acre_figs()
     upload_to_db()
     dissolve_tracts()
-    export_as_geojson()
     

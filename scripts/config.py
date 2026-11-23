@@ -12,21 +12,27 @@ log.register()
 _config_path = Path('./scripts/config.txt')
 _config_path.touch()
 
-# (doubles as defaults)
+# raw value dict (doubles as defaults)
 _idict = {
-    'write_to_file': 'true'
+    'write_to_file': 'true',
+    'dir_external_data': './ext_data'
 }
-with _config_path.open('rt') as conf_file:
-    for line in conf_file.readlines():
-        key, val = [side.strip('\'\"').strip() for side in line.split(':')]
-        if key in _idict.keys(): _idict[key] = val
-log.log(f'Loaded configuration from \"{_config_path}\"')
 
 # Configuration Settings
 def write_to_file() -> bool: return str.lower(_idict['write_to_file']) == 'true'
 def set_write_to_file(val: bool) -> None:
     _idict['write_to_file'] = str(val)
     log.set_write_to_file(val)
+    
+def dir_external_data() -> Path: return Path(_idict['dir_external_data'])
+def set_dir_external_data(val: Path) -> None:
+    _idict['dir_external_data'] = str(val)
+
+with _config_path.open('rt') as conf_file:
+    for line in conf_file.readlines():
+        key, val = [side.strip('\'\"').strip() for side in line.split(':')]
+        globals()[f'set_{key}']
+log.log(f'Loaded configuration from \"{_config_path}\"')
 
 # *unrelated to public function
 def _write_to_file() -> None:

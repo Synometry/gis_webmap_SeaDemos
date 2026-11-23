@@ -1,1 +1,2 @@
 write_to_file: true
+dir_external_data: ./ext_data
