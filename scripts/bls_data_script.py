@@ -117,5 +117,6 @@ def upload_to_db():
     else: log(f'Entries in database data: {len(df)}', '\nPreview:\n', df.head(5))
 
 if __name__ == '__main__':
+    reset_tables()
     fetch_data()
     #upload_to_db()

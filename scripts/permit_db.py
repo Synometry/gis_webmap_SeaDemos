@@ -91,11 +91,11 @@ def create_table(table_schema: Table):
     else:
         log.log(f'Table creation unsuccessful!')
 
-def table_to_dataframe(table_schema: Table, index_col: str | None = None) -> DataFrame | None:
+def table_to_dataframe(table_schema: Table, index_col: str | None = None) -> DataFrame:
     log.log(f'Fetching table \"{table_schema.name}\" as {DataFrame}')
     if not table_exists(table_schema):
-        log.log(f'Fetching failed! No such table named \"{table_schema.name}\"')
-        return None
+        log.error(f'Fetching failed! No such table named \"{table_schema.name}\"')
+        raise ValueError(f'No such table named \"{table_schema.name}\" in database!')
     return pd.read_sql_table(table_schema.name, _engine, index_col=index_col)
 
 def dataframe_to_table(df:DataFrame, table_name:str) -> None:
@@ -115,6 +115,7 @@ def geodataframe_to_table(gdf:GeoDataFrame, table_schema:Table) -> None:
         .to_sql(temp_table_name, _engine, if_exists='delete_rows', index=False, dtype={'geom_wkb':LargeBinary})
     log.log(f'Converting geometry and moving data into table \"{temp_table_name}\"')
     col_names = ', '.join([f'{c}' for c in gdf.columns if not c in ['geometry', 'geom_wkb']])
+    table_delete_all_rows(table_schema)
     with _engine.begin() as conn:
         conn.execute(text(\
             f'INSERT INTO {table_name} ({col_names}, [geometry]) '
@@ -128,8 +129,9 @@ def geodataframe_to_table(gdf:GeoDataFrame, table_schema:Table) -> None:
 def table_to_geodataframe(table_schema: Table, index_col: str | None = None) -> GeoDataFrame:
     log.log(f'Fetching table \"{table_schema.name}\" as {GeoDataFrame}')
     if not table_exists(table_schema):
-        log.log(f'Fetching failed! No such table named \"{table_schema.name}\"')
-        raise ValueError(f'No such table named \"{table_schema.name}\" in database!')
+        e = ValueError(f'No such table named \"{table_schema.name}\" in database!')
+        log.error(f'Fetching failed: {e}')
+        raise e
     df = pd.read_sql_table(table_schema.name, _engine, index_col)
     gseries = GeoSeries([shp.to_shape(geom) for geom in df['geometry']], df.index)
     gdf = GeoDataFrame(df, geometry=gseries)
@@ -137,12 +139,20 @@ def table_to_geodataframe(table_schema: Table, index_col: str | None = None) -> 
 
 # I expect to not use this
 def table_delete_all_rows(table_schema: Table) -> None:
-    if type(table_schema) is not Table: raise TypeError(f'Parameter \'table_schema\': expected type {Table}, got type {type(table_schema)} instead')
-    with _engine.begin() as conn:
-        #https://learn.microsoft.com/en-us/sql/t-sql/statements/truncate-table-transact-sql?view=sql-server-ver17
-        # ^^^ TRUNCATE is faster and cheaper than DELETE
-        name = str(table_schema.name)
-        conn.execute(text(f'TRUNCATE TABLE {name}'))
+    log.log(f'Deleting all rows of table \"{table_schema}\"')
+    if type(table_schema) is not Table:
+        e = TypeError(f'Parameter \'table_schema\': expected type {Table}, got type {type(table_schema)} instead')
+        log.error(e)
+        raise e
+    try:
+        with _engine.begin() as conn:
+            #https://learn.microsoft.com/en-us/sql/t-sql/statements/truncate-table-transact-sql?view=sql-server-ver17
+            # ^^^ TRUNCATE is faster and cheaper than DELETE
+            name = str(table_schema.name)
+            conn.execute(text(f'TRUNCATE TABLE {name}'))
+    except Exception as e:
+        log.error(f'Delete all rows failed: {e}')
+        raise
         
 def spatial_union(table_schema: Table, target_table: Table, groupby: Column | None = None, aggregates: list[tuple[Column, _FunctionGenerator, Column]] | None = None) -> None:
     # Type errors:

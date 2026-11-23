@@ -133,7 +133,7 @@ def upload_to_db():
     if invalid_coord_count > 0:
         log(f'Found {invalid_coord_count} permit entries missing coordinates - repairing...')
         df.loc[na_coord_mask, ['latitude', 'longitude']] = df.loc[na_coord_mask, 'originaladdress1'].apply(func=lambda address: pd.Series(_address_lookup.get(address, (None, None)))).values
-    pointList = [Point(lat, long) for lat, long in zip(df['latitude'], df['longitude'])]
+    pointList = [Point(long, lat) for lat, long in zip(df['latitude'], df['longitude'])]
     invalid = df[~gpd.GeoSeries(pointList).is_valid]
     invalid_shape_count = len(invalid)
     if invalid_shape_count > 0:
@@ -141,7 +141,6 @@ def upload_to_db():
         log(invalid)
         return
     elif invalid_coord_count > 0: log('All permit entries with missing coordinates successfully repaired')
-    return
     gdf = gpd.GeoDataFrame(df.drop(columns=['latitude', 'longitude']), geometry=pointList)
     log(f'Entries in data prior to upload: {len(gdf)}', '\nPreview:\n', gdf.head(5))
     log('Uploading to database...')
