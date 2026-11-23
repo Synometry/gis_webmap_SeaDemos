@@ -42,7 +42,7 @@ permit_table = Table(
     Column('housingunitsremoved',   SmallInteger),
     Column('housingunitsadded',     SmallInteger),
     Column('estprojectcost',        Float),
-    Column('adjestcost',            Float), # Derived from other table
+    Column('adjestcost',            Float), # Derived from inflation_factors table
     Column('applieddate',           Date),
     Column('issueddate',            Date),
     Column('expiresdate',           Date),
@@ -55,7 +55,9 @@ permit_table = Table(
     Column('zoning',                String(25)),
     Column('dwellingunittype',      String(87)),
     Column('housingcategory',       String(23)),
-    Column('geometry', Geometry(geometry_type='POINT', srid=4326))
+    Column('geometry',              Geometry(geometry_type='POINT', srid=4326)),
+    Column('tractid',               BigInteger), # Derived from census_tracts table
+    Column('craid',                 BigInteger), # Derived from reporting_areas table
 )
 # Omitting CheckConstraint under assumption there's no way to screw up a point
 

@@ -99,7 +99,7 @@ Seattle didn't digitize all permits on record when the database launched. 2005 i
 
 1. PermitNum is implied to be unique per entry. I found that this holds, at minimum with the filtered dataset.
 2. Despite there being a StatusCurrent value for closed permits, many permits were marked "Complete" despite the Description beginning with the phrase "closed as incomplete".
-3. Housing "Units" are intended to refer to entire structures, yet many permit applicants clearly treat it as "apartment units". There are many entries left uncorrected by the SDCI.
+3. Housing "Units" are intended to refer to entire structures, yet many permit applicants clearly treat it as "apartment units". There are many such entries left uncorrected by the SDCI.
 
 The remaining fields are included as a measure to increase the data available for users to browse.
 

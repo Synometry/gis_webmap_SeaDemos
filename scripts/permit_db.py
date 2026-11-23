@@ -11,7 +11,7 @@ from geopandas import GeoDataFrame, GeoSeries
 import pandas as pd
 from pandas import DataFrame
 import sqlalchemy
-from sqlalchemy import Column, CursorResult, Date, DateTime, Executable, LargeBinary, MetaData, Table, func, insert, select, text, inspect
+from sqlalchemy import Column, CursorResult, Date, DateTime, Executable, Integer, LargeBinary, MetaData, Table, func, insert, select, text, inspect
 from sqlalchemy.sql.functions import _FunctionGenerator
 from sqlalchemy.sql.expression import Select, FunctionElement
 from sqlalchemy.ext.compiler import compiles
@@ -29,8 +29,17 @@ class GeomUnionAggregate(FunctionElement):
     inherit_cache = True
     
 @compiles(GeomUnionAggregate)
-def compile(element, compiler, **kw):
+def compile_union(element, compiler, **kw):
     return 'geometry::UnionAggregate(%s)' % compiler.process(element.clauses, **kw)
+
+class STContains(FunctionElement):
+    type = Integer()
+    inherit_cache = True
+
+@compiles(STContains)
+def compile_contains(element, compiler, **kw):
+    col, obj = list(element.clauses)
+    return '%s.STContains(%s)' % (compiler.process(col, **kw), compiler.process(obj, **kw))
 
 # system, platform categories
 sys_cat = platform.system()
