@@ -114,7 +114,11 @@ Core is better suited for both the expected analysis and the demonstrative aims 
 ### Seattle Municipal Census Tracts
 I wanted to provide spatially-aggregated figures (e.g. "average permits per year in the Ballard neighborhood"), which meant choosing between a few spatial granularities: census blocks, census tracts (comprised of census blocks), and community reporting areas or "CRA" (which handily align to census tracts).
 
-I prioritized accessibility and chose the community reporting area representation, as that would let me refer to spatial regions by their English neighborhood names. While that was the primary level of division, I also wanted to offer a more granular look at the figures. So I elected to begin with the census tract dataset and use that to produce an additional set of polygons representing CRAs.
+I prioritized accessibility for the layman and chose the community reporting area representation, so I could refer to spatial regions by their English neighborhood names. While that was the primary level of division, I also wanted to offer a more granular look at the figures. So I elected to begin with the census tract dataset and use that to produce an additional set of polygons representing CRAs.
+
+Census tracts were loaded to the database, unchanged, in the `census_tracts` table.
+
+I performed a spatial union within the database for tracts with the same community reporting area name (field `gen_alias`) using the SQL function `geometry::UnionAggregate`. Each tract's area figures were summed to their parent CRA. I put the results of the union into the `reporting_areas` table.
 
 #### SQL: Geometry vs. Geography
 SQL supports two different data types for representing spatial data. *Geometry* treats data as flat, as if occurring on a 2D plane, while *Geography* treats data as existing on a curved ellipsoid. The choice is mostly arbitrary because the projections of my datasets can slot into either type without reprojection and the operations I'm performing on the data are unaffected by assumed curvature.

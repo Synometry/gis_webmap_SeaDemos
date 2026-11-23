@@ -197,6 +197,10 @@ def spatial_union(table_schema: Table, target_table: Table, groupby: Column | No
         [groupby.name] + [t[2].name for t in aggregates] + ['geometry'],
         sel
     )
-    with _engine.begin() as conn:
-        conn.execute(ins)
+    try:
+        with _engine.begin() as conn:
+            conn.execute(ins)
+    except Exception as e:
+        log.error(f'Spatial union failed: {e}')
+        raise
     ...
