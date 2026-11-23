@@ -130,7 +130,7 @@ I wanted to express the costs associated with the permits in current-time dollar
 
 The Bureau of Labor Statistics publishes consumer price index figures (*CPI*)  - weighted sums of various products' prices ("*baskets*") that offer a snapshot of the United States' dollar's value and thereby a citizen's purchasing power. While the BLS publishes time series of many differently-weighted baskets, the one they consider best suited for monthly, general trends in purchasing power falls under the id ```CUSR0000SA0```.
 
-The script ```bls_data_script.py``` downloads the BLS file containing all series, and extracts the desired series by id, cutting data off outside the study window (2005 to 2025, end-of). Since CPI was not calculated for October, 2025, I used a geometric interpolation between September and November of that year as an imperfect stand-in. It then takes the ratio of each month-year's CPI to the CPI of Jan, 2026.
+The script ```bls_data_script.py``` downloads the BLS file containing all series through a simple GET request, and extracts the desired series by id, cutting data off outside the study window (2005 to 2025, end-of). Since CPI was not calculated for October, 2025, I used a geometric interpolation between September and November of that year as an imperfect stand-in. It then takes the ratio of each month-year's CPI to the CPI of Jan, 2026.
 
 The transformed data is uploaded to the ```permit_project_db``` database.
 
