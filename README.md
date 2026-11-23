@@ -132,9 +132,9 @@ The Bureau of Labor Statistics publishes consumer price index figures (*CPI*)  -
 
 The script ```bls_data_script.py``` downloads the BLS file containing all series through a simple GET request, and extracts the desired series by id, cutting data off outside the study window (2005 to 2025, end-of). Since CPI was not calculated for October, 2025, I used a geometric interpolation between September and November of that year as an imperfect stand-in. It then takes the ratio of each month-year's CPI to the CPI of Jan, 2026.
 
-The transformed data is uploaded to the ```permit_project_db``` database.
+The transformed data is uploaded to the ```permit_project_db``` database in the `inflation_factors` table.
 
-In effect, this data maps flattened month-year ids to multipliers. Adjusting estimated costs to today's dollars, for example, is simply a matter of multiplying the factor associated with the month and year of the permit.
+In effect, this table maps flattened month-year ids to multipliers. Adjusting estimated costs to today's dollars, for example, is simply a matter of multiplying the factor attached to the month and year of the permit.
 
 ### Permit Data
 The focus of this project, I wanted to translate this data to a form with greater relation to the tangible reality of the city. Ideally, each entry refers to one master permit for a completed construction project, the project itself representing a discrete, physical transformation of Seattle, anchored to a single point in time when the reported or estimated changes become meaningful. (Master permits have the added virtue of consistent validity in regards to cost estimation, date, status, and changes in housing units.)
