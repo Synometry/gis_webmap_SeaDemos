@@ -7,20 +7,25 @@ import datetime
 from pathlib import Path
 import platform
 import getpass
+from typing import Union
 from geopandas import GeoDataFrame, GeoSeries
 import pandas as pd
 from pandas import DataFrame
 import sqlalchemy
-from sqlalchemy import Column, CursorResult, Date, DateTime, Executable, Integer, LargeBinary, MetaData, Table, func, insert, select, text, inspect
+from sqlalchemy import ClauseElement, Column, CursorResult, Date, DateTime, Executable, Insert, Integer, LargeBinary, MetaData, Table, Update, func, insert, select, text, inspect
 from sqlalchemy.sql.functions import _FunctionGenerator
 from sqlalchemy.sql.expression import Select, FunctionElement
 from sqlalchemy.ext.compiler import compiles
+from sqlalchemy.dialects import mssql
 from sqlalchemy.engine import URL
 import geoalchemy2.shape as shp
 import log
 log.register('Permit DB')
 
-metadata = MetaData()
+# Construct definitions
+
+class ExecutableClause(Executable, ClauseElement):
+    ...
 
 # User-defined function block taken from example in documentation:
 # https://docs.sqlalchemy.org/en/21/core/compiler.html
@@ -40,6 +45,10 @@ class STContains(FunctionElement):
 def compile_contains(element, compiler, **kw):
     col, obj = list(element.clauses)
     return '%s.STContains(%s)' % (compiler.process(col, **kw), compiler.process(obj, **kw))
+
+## Engine construction
+
+metadata = MetaData()
 
 # system, platform categories
 sys_cat = platform.system()
@@ -168,16 +177,21 @@ def table_delete_all_rows(table_schema: Table) -> None:
 # │ PROCESSING │
 # ╰────────────╯
 
-def execute(statement: Executable) -> DataFrame | None:
+def execute(statement: Update | Select | Insert) -> DataFrame | None:
+    comp = statement.compile(_engine)
+    log.log(f'Executing freeform SQLAlchemy statement:\n\"{comp}\"')
     try:
         with _engine.begin() as conn:
             res = conn.execute(statement)
+            msg = f'Statement execution succeeded'
             if res.returns_rows:
                 df = pd.DataFrame(res)
+                msg += ' - returning rows'
             else: df = None
+            log.log(msg)
         return df
     except Exception as e:
-        log.error(e)
+        log.error(f'Statement execution failed: {e}')
         raise
     ...
 

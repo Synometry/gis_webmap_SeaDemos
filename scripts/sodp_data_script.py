@@ -8,7 +8,9 @@ import requests as re
 import pandas as pd
 import geopandas as gpd
 from shapely.geometry import Point
-from sqlalchemy import BigInteger, Column, Float, Integer, SmallInteger, String, Table, Date
+from sqlalchemy import BigInteger, Boolean, Column, Float, Integer, \
+    SmallInteger, String, Table, Date, false
+from common import survey_data
 from log import log, register, error
 import permit_db
 register('SODP Data Script')
@@ -56,6 +58,7 @@ permit_table = Table(
     Column('dwellingunittype',      String(87)),
     Column('housingcategory',       String(23)),
     Column('geometry',              Geometry(geometry_type='POINT', srid=4326)),
+    Column('outside',               Boolean), # Derived from census_tracts table
     Column('tractid',               BigInteger), # Derived from census_tracts table
     Column('craid',                 BigInteger), # Derived from reporting_areas table
 )
@@ -155,19 +158,7 @@ def upload_to_db():
 def data_peeker():
     log('Surveying columns in permit data:')
     df = pd.read_csv(raw_data_path)
-    namelist = ['name:']
-    typelist = ['type:']
-    maxlist = ['maximum:']
-    uniquelist = ['unique:']
-    for (c, t) in zip(df.columns, df.dtypes):
-        namelist.append(c)
-        typelist.append(t)
-        uniquelist.append(str(df[c].is_unique))
-        if isinstance(t, pd.StringDtype):
-            maxlist.append(np.max(df[c].str.len()))
-        else:
-            maxlist.append(np.max(df[c]))
-    log(namelist, typelist, maxlist, uniquelist)
+    survey_data(df)
     ...
     
 if __name__ == '__main__':

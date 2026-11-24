@@ -2,6 +2,12 @@
 # Holden Bailey 2026
 # Common functions for Seattle Permitting Project
 
+import numpy as np
+import pandas as pd
+
+from log import log, register
+register('Common Functions')
+
 def base_from_url(url: str) -> str:
     """base_from_url extracts the base address from a url string
 
@@ -17,6 +23,22 @@ def base_from_url(url: str) -> str:
     """
     
     return '/'.join(url.split('/')[:3])
+
+def survey_data(data: pd.DataFrame) -> None:
+    namelist = ['name:']
+    typelist = ['type:']
+    maxlist = ['maximum:']
+    uniquelist = ['unique:']
+    for (c, t) in zip(data.columns, data.dtypes):
+        namelist.append(c)
+        typelist.append(t)
+        uniquelist.append(str(data[c].is_unique))
+        if isinstance(t, pd.StringDtype):
+            maxlist.append(np.max(data[c].str.len()))
+        else:
+            maxlist.append(np.max(data[c]))
+    log(namelist, typelist, maxlist, uniquelist)
+    
 
 
 if __name__ == '__main__':

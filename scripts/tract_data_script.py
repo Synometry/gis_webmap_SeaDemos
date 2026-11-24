@@ -9,10 +9,9 @@ import pandas as pd
 import geopandas as gpd
 from sqlalchemy import BigInteger, CheckConstraint, Column, String, Table, Integer, Float, func
 from geoalchemy2 import Geography, Geometry
-from common import base_from_url
+from common import base_from_url, survey_data
 from log import log, register
 import permit_db
-
 register('Tract Data Script')
 
 ## Data Definitions
@@ -28,8 +27,8 @@ tract_table = Table(
     Column('gross_acres', Float),
     Column('land_acres', Float),
     Column('water_acres', Float),
-    Column('gen_alias', String(63)),
-    Column('detl_names', String(127)),
+    Column('gen_alias', String(37)),
+    Column('detl_names', String(114)),
     Column('geometry', Geometry(geometry_type='GEOMETRY', srid=4326)),
     CheckConstraint('geometry.STIsValid() = 1')
 )
@@ -39,7 +38,7 @@ t_name_cra = 'reporting_areas'
 cra_table = Table(
     t_name_cra,
     permit_db.metadata,
-    Column('gen_alias', String(63)),
+    Column('gen_alias', String(37)),
     Column('geoid20', BigInteger, primary_key=True, autoincrement=False),
     Column('gross_acres', Float),
     Column('land_acres', Float),
@@ -122,11 +121,17 @@ def eval_acre_figs():
     gdf['error2'] = gdf['GROSS_ACRES'] - gdf['acreage']
     log(gdf.drop(columns=['DETL_NAMES', 'GEOID20']).sort_values('error'))
     log(gdf['error2'].describe())
-    
+
+def peek_data():
+    gdf = gpd.read_file(raw_data_path)
+    survey_data(gdf.drop(columns=['geometry']))
+    ...
+
 if __name__ == '__main__':
-    reset_tables()
-    fetch_data()
+    # reset_tables()
+    # fetch_data()
     # eval_acre_figs()
-    upload_to_db()
-    dissolve_tracts()
+    peek_data()
+    # upload_to_db()
+    # dissolve_tracts()
     

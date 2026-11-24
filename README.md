@@ -103,6 +103,138 @@ Seattle didn't digitize all permits on record when the database launched. 2005 i
 
 The remaining fields are included as a measure to increase the data available for users to browse.
 
+## `project_pemit_db` - Database Structure
+4 tables: `census_tracts`, `reporting_areas`, `inflation_factors`, and `seattle_permits`.
+
+I define the Python-side schema for each of the tables by instantiating the sqlalchemy module's `Table` class. Each table is defined for a selection of the fields I want to capture from the source data, as well I include additional columns for data transformations that will happen further down the line.
+
+These are largely parallel with the dataset listed in the previous Data section, with some exceptions.
+
+Sizes of string-type columns, the `N` in `varchar(N)`, were determined from the maximum string lengths of the source fields using the `survey_data()` function in my `common.py` module. For example, the longest community reporting area name is 37 characters long, so the `gen_alias` column is of type `varchar(37)`.
+
+### Table: `census_tracts`
+
+Officially-designated census tracts for the 2020 census.
+
+|Field|Type|Notes|
+|-|-|-|
+|geoid20|bigint|*unique*|
+|gross_acres<sup>1</sup>|float||
+|land_acres<sup>1</sup>|float||
+|water_acres<sup>1</sup>|float||
+|gen_alias|varchar(37)|name of surrounding community reporting area|
+|detl_names|varchar(114)|alternative neighborhood names|
+|geometry|geometry|type: multipolygon|
+
+1. I determined that water/land figures were not complementary to one another (certain areas may be considered both land *and* water), and rarely did they sum to the `gross_acres` total.
+
+### Table: `reporting_areas`
+
+Community reporting areas derived by Seattle city staff from census tracts.
+
+|Field|Type|Notes|
+|-|-|-|
+|geoid20|bigint|*unique*; simply the first constituent tract id in sequence|
+|gross_acres<sup>1, 2</sup>|float||
+|land_acres<sup>1, 2</sup>|float||
+|water_acres<sup>1, 2</sup>|float||
+|gen_alias|varchar(37)|name|
+|geometry|geometry|type: multipolygon|
+
+1. The same caveat for use holds as with the previous table.
+2. These figures are the simple sums of the area's constituent census tract.
+
+I form this table by dissolving polygons from `census_tracts` that share a `gen_alias` value. This was accomplished using the following SQL query, which I translated to SQLAlchemy's Core functions:
+
+```SQL
+--Populate entire table with result of spatial union
+INSERT INTO reporting_areas
+    (gen_alias, geoid20, gross_acres, land_acres, water_acres, geometry)
+SELECT gen_alias,
+       MIN(geoid20),
+       SUM(gross_acres),
+       SUM(land_acres),
+       SUM(water_acres),
+       geometry::UnionAggregate(geometry)
+FROM census_tracts
+```
+
+### Table: `inflation_factors`
+
+Each row is a particular month and year. Their corresponding "factors" can be used to calculate the amount of Jan, 2026 dollars for every 1 dollar during that month and year.
+
+|Field|Type|Notes|
+|-|-|-|
+|month_id|int|*unique*; simply the 6-digit year-month combo|
+|year|int||
+|month|int||
+|factor|float||
+
+### Table: `seattle_permits`
+
+|Field|Type|Notes|
+|-|-|-|
+|permitnum|bigint|*unique*|
+|permitclass|float||
+|permittypedesc|float||
+|description|float||
+|housingunits<sup>1</sup>|smallint|net change|
+|housingunitsremoved<sup>1</sup>|smallint||
+|housingunitsadded<sup>1</sup>|smallint||
+|estprojectcost|float|nominal dollars|
+|adjestcost*|float|inflation-adjusted|
+|applieddate|date||
+|issueddate|date||
+|expiresdate|date||
+|completeddate|date||
+|statuscurrent|varchar(21)||
+|originaladdress|varchar(32)||
+|originalzip|int||
+|contractorcompanyname|varchar(44)||
+|link|varchar(80)||
+|zoning|varchar(25)||
+|dwellingunittype|varchar(87)||
+|housingcategory|varchar(23)||
+|geometry|geometry|type: point|
+|outside*|bit|`TRUE` if the permit location is outside all census tracts|
+|tractid*|bigint|geoid20 of the surrounding (or nearest) tract|
+|craid*|bigint|id of surrounding (or nearest) reporting area|
+
+*Calculated post-hoc
+
+1. As reported elsewhere, "Units" is intended to refer to actual buildings and not individual rentable units, bedrooms, etc. This convention is occasionally ignored by permits within the dataset.
+
+#### Populating column `adjestcost`:
+
+Calculating the inflation-adjusted cost-estimates for each permit involved the following parts:
+1. Form a month id value for each permit, using the date within `issueddate`.
+2. Use that id to look up the correct `factor` value in the table `inflation_factors`.
+3. Update the permit's `adjestcost` with the product of that permit's `estprojectcost` and the `factor` value found in (2).
+
+That logic is reflected in the following SQL query:
+```SQL
+--Set the adjusted cost to the product of the estimate and the factor for the month the permit was issued
+UPDATE seattle_permits
+SET adjestcost = estprojectcost * inflation_factors.factor
+WHERE CONCAT(YEAR(issueddate), FORMAT(MONTH(issueddate), '00')) = inflation_factors.month_id
+```
+Likewise, I translated this query into its SQLAlchemy Core equivalent.
+
+#### Populating column `tractid` and `outside`:
+
+This task was accomplished in two stages:
+1. Attach the `geoid20` of the tract the permit point falls within.
+    - set `outside` to `TRUE` if the `tractid` remains `NULL`
+2. For `NULL` ids, attach the `geoid20` of the *nearest* tract instead.
+
+The following three queries accomplish this:
+```SQL
+--Attach surrounding tract id to permit
+UPDATE seattle_permits
+SET tractid = census_tracts.geoid20
+WHERE census_tracts.geometry.STWithin(seattle_permits.geometry) = 1
+```
+
 ## {Methods/Methodology (name/explain each step)}
 ### Broad Script Design
 #### SQLAlchemy: Core vs. ORM Model
