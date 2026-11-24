@@ -4,7 +4,7 @@
 # A group of scripts for processing data in the sql server
 
 import permit_db
-from sqlalchemy import func, select, insert, update
+from sqlalchemy import func, select, insert, update, case
 import sodp_data_script
 import tract_data_script
 import bls_data_script
@@ -55,9 +55,12 @@ def permit_poly_ids():
     """
     tractid_col = perm_table.c.tractid
     
-    upd2 = update(perm_table).values(outside=tractid_col.is_(None))
+    upd2 = update(perm_table).values(outside=case((tractid_col.is_(None), 1), else_=0))
     
     permit_db.execute(upd2)
+    
+    # Stage 2 -- attach geoid20's of nearest tracts to permits
+    
 
 if __name__ == '__main__':
     # calculate_adj_est()

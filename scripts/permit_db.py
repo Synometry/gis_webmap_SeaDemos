@@ -178,7 +178,7 @@ def table_delete_all_rows(table_schema: Table) -> None:
 # ╰────────────╯
 
 def execute(statement: Update | Select | Insert) -> DataFrame | None:
-    comp = statement.compile(_engine)
+    comp = statement.compile(_engine, compile_kwargs={'literal_binds': True})
     log.log(f'Executing freeform SQLAlchemy statement:\n\"{comp}\"')
     try:
         with _engine.begin() as conn:
