@@ -12,7 +12,7 @@ from geopandas import GeoDataFrame, GeoSeries
 import pandas as pd
 from pandas import DataFrame
 import sqlalchemy
-from sqlalchemy import ClauseElement, Column, CursorResult, Date, DateTime, Executable, Insert, Integer, LargeBinary, MetaData, Table, Update, func, insert, select, text, inspect
+from sqlalchemy import ClauseElement, Column, CursorResult, Date, DateTime, Executable, Float, Insert, Integer, LargeBinary, MetaData, Table, Update, func, insert, select, text, inspect
 from sqlalchemy.sql.functions import _FunctionGenerator
 from sqlalchemy.sql.expression import Select, FunctionElement
 from sqlalchemy.ext.compiler import compiles
@@ -45,6 +45,15 @@ class STContains(FunctionElement):
 def compile_contains(element, compiler, **kw):
     col, obj = list(element.clauses)
     return '%s.STContains(%s)' % (compiler.process(col, **kw), compiler.process(obj, **kw))
+
+class STDistance(FunctionElement):
+    type = Float()
+    inherit_cache = True
+
+@compiles(STDistance)
+def compile_distance(element, compiler, **kw):
+    col, obj = list(element.clauses)
+    return '%s.STDistance(%s)' % (compiler.process(col, **kw), compiler.process(obj, **kw))
 
 ## Engine construction
 
