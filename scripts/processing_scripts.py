@@ -65,9 +65,9 @@ def permit_poly_ids():
     UPDATE seattle_permits
     SET outside = CASE WHEN tractid IS NULL THEN ! ELSE 0
     """
-    tractid_col = perm_table.c.tractid #TODO: confusing name
+    perm_tractid_col = perm_table.c.tractid
     
-    upd2 = update(perm_table).values(outside=case((tractid_col.is_(None), 1), else_=0))
+    upd2 = update(perm_table).values(outside=case((perm_tractid_col.is_(None), 1), else_=0))
     
     permit_db.execute(upd2)
     
@@ -81,7 +81,7 @@ def permit_poly_ids():
     )
     WHERE tractid IS NULL
     """
-    cond3 = tractid_col.is_(None)
+    cond3 = perm_tractid_col.is_(None)
     
     subq3 = select(tract_id_col).order_by(permit_db.STDistance(tract_geom_col, geom_col).asc()).limit(1).scalar_subquery()
     
@@ -89,6 +89,26 @@ def permit_poly_ids():
     
     permit_db.execute(upd3)
 
+    # Stage 3 -- use permit's tractid to find its cra
+    """SQL
+    UPDATE seattle_permits
+    SET craid = (
+        SELECT TOP 1 reporting_areas.geoid20
+        FROM census_tracts, reporting_areas
+        WHERE seattle_permits.tractid = census_tracts.geoid20 AND census_tracts.gen_alias = reporting_areas.gen_alias
+    )
+    """
+    tract_alias_col = tract_table.c.gen_alias
+    cra_table = tract_data_script.cra_table
+    cra_id_col = cra_table.c.geoid20
+    cra_alias_col = cra_table.c.gen_alias
+    
+    subq4 = select(cra_id_col).where(perm_tractid_col == tract_id_col, tract_alias_col == cra_alias_col).limit(1).scalar_subquery()
+    
+    upd4 = update(perm_table).values(craid = subq4)
+    
+    permit_db.execute(upd4)
+    
 
 if __name__ == '__main__':
     # calculate_adj_est()
