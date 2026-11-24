@@ -254,6 +254,20 @@ WHERE tractid IS NULL
 ```
 The code used to build SQLAlchemy equivalents is found in `processing_scripts.py`.
 
+#### Populating column `craid`:
+Setting each permit's reporting area id was a simple matter.
+
+Query used to model SQLAlchemy code:
+```SQL
+--Attach the cra id of cra's that share a gen_alias with the tract carrying the permit's tractid
+UPDATE seattle_permits
+SET craid = (
+    SELECT TOP 1 reporting_areas.geoid20
+    FROM census_tracts, reporting_areas
+    WHERE seattle_permits.tractid = census_tracts.geoid20 AND census_tracts.gen_alias = reporting_areas.gen_alias
+)
+```
+
 ## {Methods/Methodology (name/explain each step)}
 ### Broad Script Design
 #### SQLAlchemy: Core vs. ORM Model
