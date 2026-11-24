@@ -231,9 +231,28 @@ The following three queries accomplish this:
 ```SQL
 --Attach surrounding tract id to permit
 UPDATE seattle_permits
-SET tractid = census_tracts.geoid20
-WHERE census_tracts.geometry.STWithin(seattle_permits.geometry) = 1
+SET tractid = (
+    SELECT TOP 1 census_tracts.geoid20
+    FROM census_tracts
+    WHERE census_tracts.geometry.STContains(seattle_permits.geometry) = 1
+)
 ```
+```SQL
+--Set outside to TRUE for permits that don't fall within any tract
+UPDATE seattle_permits
+SET outside = CASE WHEN tractid IS NULL THEN ! ELSE 0
+```
+```SQL
+--To permits with no tractid, attach id of nearest tract
+UPDATE seattle_permits
+SET tractid = (
+    SELECT TOP 1 census_tracts.geoid20
+    FROM census_tracts
+    ORDER BY seattle_permits.geometry.STDistance(census_tracts.geometry) ASC
+)
+WHERE tractid IS NULL
+```
+The code used to build SQLAlchemy equivalents is found in `processing_scripts.py`.
 
 ## {Methods/Methodology (name/explain each step)}
 ### Broad Script Design
