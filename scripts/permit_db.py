@@ -13,6 +13,7 @@ import pandas as pd
 from pandas import DataFrame
 import sqlalchemy
 from sqlalchemy import ClauseElement, Column, CursorResult, Date, DateTime, Executable, Float, Insert, Integer, LargeBinary, MetaData, Table, Update, func, insert, select, text, inspect
+from sqlalchemy.schema import DDLElement
 from sqlalchemy.sql.functions import _FunctionGenerator
 from sqlalchemy.sql.expression import Select, FunctionElement
 from sqlalchemy.ext.compiler import compiles
@@ -23,6 +24,17 @@ import log
 log.register('Permit DB')
 
 # Construct definitions
+
+# From example - source:
+# https://github.com/sqlalchemy/sqlalchemy/wiki/Views
+class CreateView(DDLElement):
+    def __init__(self, name, selectable):
+        self.name = name
+        self.selectable = selectable
+
+@compiles(CreateView)
+def compile_create_view(element, compiler, **kw):
+    return 'CREATE VIEW %s AS %s' % (element.name, compiler.sql_compiler(element.selectable))
 
 # User-defined function block taken from example in documentation:
 # https://docs.sqlalchemy.org/en/21/core/compiler.html
