@@ -45,14 +45,18 @@ SELECT TOP (1000) COUNT([permitnum]) AS permitcount
       ,SUM([housingunits]) AS housingunits_tot
       ,AVG(CAST([housingunits] AS FLOAT)) AS housingunits_avg
       ,SUM([housingunitsremoved]) AS housingunitsremoved_tot
-      ,AVG([housingunitsremoved]) AS housingunitsremoved_avg
+      ,AVG(CAST([housingunitsremoved] AS FLOAT)) AS housingunitsremoved_avg
       ,SUM([housingunitsadded]) AS housingunitsadded_tot
-      ,AVG([housingunitsadded]) AS housingunitsadded_avg
+      ,AVG(CAST([housingunitsadded] AS FLOAT)) AS housingunitsadded_avg
       ,SUM([estprojectcost]) AS estprojectcost_tot
       ,AVG([estprojectcost]) AS estprojectcost_avg
       ,SUM([adjestcost]) AS adjestcost_tot
       ,AVG([adjestcost]) AS adjestcost_avg
-      ,[monthid]
+      ,SUM([estprojectcost])/SUM([housingunits]) AS estcost_pernetunit
+      ,SUM([estprojectcost])/SUM([housingunitsgross]) AS estcost_pergrossunit
+      ,SUM([adjestcost])/SUM([housingunits]) AS adjcost_pernetunit
+      ,SUM([adjestcost])/SUM([housingunitsgross]) AS adjcost_pergrossunit
+      ,FORMAT([monthdate], 'yyyy-MM') AS [month]
   FROM [project_permit_db].[dbo].[seattle_permits]
-  GROUP BY monthid
-  ORDER BY monthid ASC"""
+  GROUP BY monthdate
+  ORDER BY monthdate ASC"""

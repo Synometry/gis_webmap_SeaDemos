@@ -9,7 +9,7 @@ import pandas as pd
 import geopandas as gpd
 from shapely.geometry import Point
 from sqlalchemy import BigInteger, Boolean, Column, Computed, Float, Integer, \
-    SmallInteger, String, Table, Date, false, func
+    SmallInteger, String, Table, Date, false, func, text
 from common import survey_data
 from log import log, register, error
 import permit_db
@@ -62,8 +62,12 @@ permit_table = Table(
     Column('tractid',               BigInteger), # Derived from census_tracts table
     Column('craid',                 BigInteger), # Derived from reporting_areas table
 )
+comp_col_monthdate = Column('monthdate', Date, Computed(func.datetrunc(text('month'), permit_table.c.issueddate)))
+permit_table.append_column(comp_col_monthdate)
 comp_col_monthid = Column('monthid', Integer, Computed(func.concat(func.year(permit_table.c.issueddate), func.FORMAT(func.month(permit_table.c.issueddate), '00'))))
 permit_table.append_column(comp_col_monthid)
+comp_col_hunitsgross = Column('housingunitsgross', Integer, Computed(permit_table.c.housingunitsremoved + permit_table.c.housingunitsadded))
+permit_table.append_column(comp_col_hunitsgross)
 # Omitting CheckConstraint under assumption there's no way to screw up a point
 
 def reset_tables():
