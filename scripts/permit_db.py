@@ -24,9 +24,6 @@ log.register('Permit DB')
 
 # Construct definitions
 
-class ExecutableClause(Executable, ClauseElement):
-    ...
-
 # User-defined function block taken from example in documentation:
 # https://docs.sqlalchemy.org/en/21/core/compiler.html
 class GeomUnionAggregate(FunctionElement):
