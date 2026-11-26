@@ -39,3 +39,20 @@ def reset_tables():
     tables = [m_agg_table]
     log('Submitting table schemata for reset:', ', '.join([f'\"{t.name}\"' for t in tables]))
     [permit_db.create_table(table) for table in tables]
+
+"""SQL
+SELECT TOP (1000) COUNT([permitnum]) AS permitcount
+      ,SUM([housingunits]) AS housingunits_tot
+      ,AVG(CAST([housingunits] AS FLOAT)) AS housingunits_avg
+      ,SUM([housingunitsremoved]) AS housingunitsremoved_tot
+      ,AVG([housingunitsremoved]) AS housingunitsremoved_avg
+      ,SUM([housingunitsadded]) AS housingunitsadded_tot
+      ,AVG([housingunitsadded]) AS housingunitsadded_avg
+      ,SUM([estprojectcost]) AS estprojectcost_tot
+      ,AVG([estprojectcost]) AS estprojectcost_avg
+      ,SUM([adjestcost]) AS adjestcost_tot
+      ,AVG([adjestcost]) AS adjestcost_avg
+      ,[monthid]
+  FROM [project_permit_db].[dbo].[seattle_permits]
+  GROUP BY monthid
+  ORDER BY monthid ASC"""

@@ -46,6 +46,7 @@ def permit_poly_ids():
     )
     """
     perm_table = sodp_data_script.permit_table
+    log(f'Calculating point-in-polygon fields for \"{perm_table}\"')
     geom_col = perm_table.c.geometry
     
     tract_table = tract_data_script.tract_table
@@ -58,6 +59,7 @@ def permit_poly_ids():
     
     upd1 = update(perm_table).values(tractid = subq1)
     
+    log(f'Calculating id of containing tract (field \"{perm_table.c.tractid}\")')
     permit_db.execute(upd1)
     
     # Stage 1.2 -- set outside to TRUE if tactid is NULL
@@ -69,6 +71,7 @@ def permit_poly_ids():
     
     upd2 = update(perm_table).values(outside=case((perm_tractid_col.is_(None), 1), else_=0))
     
+    log(f'Assigning \"outside\" status (field \"{perm_table.c.outside}\")')
     permit_db.execute(upd2)
     
     # Stage 2 -- attach geoid20's of nearest tracts to permits
@@ -87,6 +90,7 @@ def permit_poly_ids():
     
     upd3 = update(perm_table).where(cond3).values(tractid = subq3)
     
+    log(f'Calculating id of nearest tract (field \"{perm_table.c.tractid}\")')
     permit_db.execute(upd3)
 
     # Stage 3 -- use permit's tractid to find its cra
@@ -107,9 +111,11 @@ def permit_poly_ids():
     
     upd4 = update(perm_table).values(craid = subq4)
     
+    log(f'Calculating id of associated cra (field \"{perm_table.c.craid}\")')
     permit_db.execute(upd4)
+    log(f'Completed point-in-polygon calculations')
     
 
 if __name__ == '__main__':
-    # calculate_adj_est()
+    calculate_adj_est()
     permit_poly_ids()
