@@ -12,8 +12,8 @@ from geopandas import GeoDataFrame, GeoSeries
 import pandas as pd
 from pandas import DataFrame
 import sqlalchemy
-from sqlalchemy import ClauseElement, Column, CursorResult, Date, DateTime, Executable, Float, Insert, Integer, LargeBinary, MetaData, Table, Update, func, insert, select, text, inspect
-from sqlalchemy.schema import DDLElement
+from sqlalchemy import ClauseElement, Column, CreateView, CursorResult, Date, DateTime, Executable, Float, Insert, Integer, LargeBinary, MetaData, Table, Update, func, insert, select, text, inspect
+from sqlalchemy.schema import CreateSchema, DDLElement
 from sqlalchemy.sql.functions import _FunctionGenerator
 from sqlalchemy.sql.expression import Select, FunctionElement
 from sqlalchemy.ext.compiler import compiles
@@ -24,17 +24,6 @@ import log
 log.register('Permit DB')
 
 # Construct definitions
-
-# From example - source:
-# https://github.com/sqlalchemy/sqlalchemy/wiki/Views
-class CreateView(DDLElement):
-    def __init__(self, name, selectable):
-        self.name = name
-        self.selectable = selectable
-
-@compiles(CreateView)
-def compile_create_view(element, compiler, **kw):
-    return 'CREATE VIEW %s AS %s' % (element.name, compiler.sql_compiler(element.selectable))
 
 # User-defined function block taken from example in documentation:
 # https://docs.sqlalchemy.org/en/21/core/compiler.html
@@ -195,7 +184,7 @@ def table_delete_all_rows(table_schema: Table) -> None:
 # │ PROCESSING │
 # ╰────────────╯
 
-def execute(statement: Update | Select | Insert) -> DataFrame | None:
+def execute(statement: Update | Select | Insert | CreateSchema | CreateView) -> DataFrame | None:
     comp = statement.compile(_engine, compile_kwargs={'literal_binds': True})
     log.log(f'Executing freeform SQLAlchemy statement:\n\"{comp}\"')
     try:
@@ -263,22 +252,6 @@ def spatial_union(table_schema: Table, target_table: Table, groupby: Column | No
         log.error(f'Spatial union failed: {e}')
         raise
     log.log('Spatial union complete')
-    
-def month_id(table_schema: Table, date_col: Column) -> None:
-    if not isinstance(table_schema, Table):
-        e = TypeError(f'table_schema: expected {Table} but received {type(table_schema)}')
-        log.error(e)
-        raise e
-    if not isinstance(date_col, Column):
-        e = TypeError(f'date_col: expected {Column} but received {type(date_col)}')
-        log.error(e)
-        raise e
-    if not isinstance(date_col.type, (Date, DateTime)):
-        e = ValueError(f'date_col: expected a column with date-like type, but received a column with type {type(date_col.type)}')
-        log.error(e)
-        raise e
-    with _engine.begin() as conn:
-        sel = select(func.concat(func.year()))
 
 # ╭─────────╮
 # │ EXPORTS │
