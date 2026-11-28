@@ -104,6 +104,16 @@ except Exception as e:
 
 log.log('Engine connection test passed')
 
+## Schema Manipulation
+
+def schema_exists(schema_name: str) -> bool: return inspect(_engine).has_schema(schema_name)
+
+def create_schema(schema_name: str, if_not_exists: bool = False) -> None:
+    if if_not_exists and schema_exists(schema_name): return
+    _execute(CreateSchema(schema_name))
+
+## Table Manipulation
+
 def table_exists(table: Table) -> bool: return inspect(_engine).has_table(table.name)
 
 def create_table(table_schema: Table):

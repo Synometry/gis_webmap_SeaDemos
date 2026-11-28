@@ -9,7 +9,7 @@ import numpy as np
 import requests as re
 import pandas as pd
 import geopandas as gpd
-from sqlalchemy import BigInteger, CheckConstraint, Column, CreateView, String, Table, Integer, Float, func, select
+from sqlalchemy import BigInteger, cast, CheckConstraint, Column, CreateView, String, Table, Integer, Float, func, select
 from geoalchemy2 import Geography, Geometry
 from sqlalchemy.schema import CreateSchema
 import sodp_data_script
@@ -22,18 +22,17 @@ register('Aggregation Script')
 
 log('Building table views')
 agg_schema_name = 'agg'
-create_agg_schema = CreateSchema(agg_schema_name)
 
 m_agg_view_name = 'month_aggregated_view'
 p_t = sodp_data_script.permit_table
 m_agg_sel = select(
     func.count(p_t.c.permitnum).label('permitcount'),
     func.sum(p_t.c.housingunits).label('housingunits_tot'),
-    func.avg(p_t.c.housingunits).label('housingunits_avg'),
+    func.avg(cast(p_t.c.housingunits, Float)).label('housingunits_avg'),
     func.sum(p_t.c.housingunitsremoved).label('housingunitsremoved_tot'),
-    func.avg(p_t.c.housingunitsremoved).label('housingunitsremoved_avg'),
+    func.avg(cast(p_t.c.housingunitsremoved, Float)).label('housingunitsremoved_avg'),
     func.sum(p_t.c.housingunitsadded).label('housingunitsadded_tot'),
-    func.avg(p_t.c.housingunitsadded).label('housingunitsadded_avg'),
+    func.avg(cast(p_t.c.housingunitsadded, Float)).label('housingunitsadded_avg'),
     func.sum(p_t.c.estprojectcost).label('estprojectcost_tot'),
     func.avg(p_t.c.estprojectcost).label('estprojectcost_avg'),
     func.sum(p_t.c.adjestcost).label('adjestcost_tot'),
@@ -41,7 +40,7 @@ m_agg_sel = select(
     (func.sum(p_t.c.adjestcost)/func.sum(p_t.c.housingunits)).label('estcost_pernetunit'),
     (func.sum(p_t.c.adjestcost)/func.sum(p_t.c.housingunitsgross)).label('estcost_perunitgross'),
     func.format(p_t.c.monthdate, 'yyyy-MM').label('month'),
-).group_by(p_t.c.monthdate).order_by(p_t.c.monthdate.asc())
+).group_by(p_t.c.monthdate)
 
 create_m_agg_view = CreateView(m_agg_sel, m_agg_view_name, or_replace=True, schema=agg_schema_name)
 
@@ -68,7 +67,7 @@ SELECT TOP (1000) COUNT([permitnum]) AS permitcount
 
 def setup_db_objects():
     log(f'Creating schema \"{agg_schema_name}\"')
-    permit_db.execute(create_agg_schema)
+    permit_db.create_schema(agg_schema_name, if_not_exists=True)
     log(f'Creating view \"{m_agg_view_name}\"')
     permit_db.execute(create_m_agg_view)
 
