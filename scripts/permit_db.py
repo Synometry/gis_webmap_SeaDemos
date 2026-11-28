@@ -187,20 +187,25 @@ def table_delete_all_rows(table_schema: Table) -> None:
 def execute(statement: Update | Select | Insert | CreateSchema | CreateView) -> DataFrame | None:
     comp = statement.compile(_engine, compile_kwargs={'literal_binds': True})
     log.log(f'Executing freeform SQLAlchemy statement:\n\"{comp}\"')
+    df = _execute(statement)
+    msg = f'Statement execution succeeded'
+    if df is not None:
+        msg += ' - returning rows'
+    log.log(msg)
+    return df
+
+def _execute(statement) -> DataFrame | None:
     try:
         with _engine.begin() as conn:
             res = conn.execute(statement)
-            msg = f'Statement execution succeeded'
             if res.returns_rows:
                 df = pd.DataFrame(res)
-                msg += ' - returning rows'
             else: df = None
-            log.log(msg)
         return df
     except Exception as e:
         log.error(f'Statement execution failed: {e}')
         raise
-    ...
+
 
 def spatial_union(table_schema: Table, target_table: Table, groupby: Column | None = None, aggregates: list[tuple[Column, _FunctionGenerator, Column]] | None = None) -> None:
     # Type errors:
